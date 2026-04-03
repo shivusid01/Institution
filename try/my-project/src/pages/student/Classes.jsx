@@ -6,7 +6,7 @@ import { classAPI } from '../../services/api'
 const StudentClasses = () => {
   const { user } = useAuth()
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
-  const [classes, setClasses] = useState([])
+  const [allClasses, setAllClasses] = useState([])
   const [upcomingClasses, setUpcomingClasses] = useState([])
   const [recordedClasses, setRecordedClasses] = useState([])
   const [loading, setLoading] = useState(true)
@@ -24,18 +24,18 @@ const StudentClasses = () => {
       // Get all classes
       const response = await classAPI.getClasses()
       if (response.data.success) {
-        const allClasses = response.data.classes || []
-        setClasses(allClasses)
+        const classes = response.data.classes || []
+        setAllClasses(classes)
         
-        // Filter upcoming classes
+        // Filter upcoming and live classes
         const now = new Date()
-        const upcoming = allClasses.filter(cls => 
-          new Date(cls.startTime) > now && cls.status === 'scheduled'
+        const upcoming = classes.filter(cls => 
+          cls.status === 'upcoming' || cls.status === 'live'
         )
         setUpcomingClasses(upcoming)
         
         // Filter recorded/completed classes
-        const recorded = allClasses.filter(cls => 
+        const recorded = classes.filter(cls => 
           cls.status === 'completed' && cls.recordingLink
         )
         setRecordedClasses(recorded)
@@ -96,75 +96,136 @@ const StudentClasses = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - All Classes */}
+        {/* Left Column - Upcoming Classes and All Classes */}
         <div className="lg:col-span-2 space-y-8">
+          {/* Upcoming Classes Section */}
           <div className="card">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900">All Classes</h2>
-              <div>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="input-field py-2"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {classes.map((classItem) => {
-                const now = new Date()
-                const startTime = new Date(classItem.startTime)
-                const isLive = startTime <= now && 
-                              new Date(classItem.endTime) >= now &&
-                              classItem.status === 'live'
-                const isUpcoming = startTime > now
-                const isCompleted = classItem.status === 'completed'
-                
-                return (
-                  <div key={classItem._id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="flex items-center mb-2">
-                          <span className={`h-3 w-3 rounded-full mr-2 ${
-                            isCompleted ? 'bg-green-500' :
-                            isLive ? 'bg-red-500 animate-pulse' :
-                            'bg-blue-500'
-                          }`}></span>
-                          <span className="text-sm font-medium text-gray-500 uppercase">
-                            {isLive ? 'LIVE' : isUpcoming ? 'UPCOMING' : 'COMPLETED'}
-                          </span>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Upcoming Classes</h2>
+            {upcomingClasses.length > 0 ? (
+              <div className="space-y-4">
+                {upcomingClasses.map((classItem) => {
+                  const now = new Date()
+                  const startTime = new Date(classItem.startTime)
+                  const isLive = classItem.status === 'live'
+                  
+                  return (
+                    <div key={classItem._id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="flex items-center mb-2">
+                            <span className={`h-3 w-3 rounded-full mr-2 ${
+                              isLive ? 'bg-red-500 animate-pulse' : 'bg-blue-500'
+                            }`}></span>
+                            <span className="text-sm font-medium text-gray-500 uppercase">
+                              {isLive ? 'LIVE' : 'UPCOMING'}
+                            </span>
+                          </div>
+                          <h3 className="font-bold text-gray-900">{classItem.subject || classItem.name}</h3>
+                          <p className="text-gray-700 mt-1">{classItem.topic || classItem.description}</p>
+                          <div className="flex items-center mt-3 text-sm text-gray-600">
+                            <span className="mr-4">👨‍🏫 {classItem.instructor || classItem.instructorName}</span>
+                            <span>🕐 {formatDateTime(classItem.startTime)}</span>
+                          </div>
                         </div>
-                        <h3 className="font-bold text-gray-900">{classItem.subject}</h3>
-                        <p className="text-gray-700 mt-1">{classItem.topic}</p>
-                        <div className="flex items-center mt-3 text-sm text-gray-600">
-                          <span className="mr-4">👨‍🏫 {classItem.instructorName}</span>
-                          <span>🕐 {formatDateTime(classItem.startTime)}</span>
+                        <div>
+                          {isLive ? (
+                            <button 
+                              onClick={() => handleJoinClass(classItem)}
+                              className="btn-primary whitespace-nowrap"
+                            >
+                              Join Now
+                            </button>
+                          ) : (
+                            <button className="btn-secondary whitespace-nowrap">
+                              Starts at {formatTime(classItem.startTime)}
+                            </button>
+                          )}
                         </div>
-                      </div>
-                      <div>
-                        {isLive ? (
-                          <button 
-                            onClick={() => handleJoinClass(classItem)}
-                            className="btn-primary"
-                          >
-                            Join Now
-                          </button>
-                        ) : isUpcoming ? (
-                          <button className="btn-secondary">
-                            Starts at {formatTime(classItem.startTime)}
-                          </button>
-                        ) : (
-                          <button className="btn-secondary">
-                            {classItem.recordingLink ? 'Watch Recording' : 'Completed'}
-                          </button>
-                        )}
                       </div>
                     </div>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No upcoming classes at the moment</p>
+              </div>
+            )}
+          </div>
+
+          {/* Classes History - All Classes Including Completed */}
+          <div className="card">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Classes History</h2>
+            
+            {allClasses.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Subject</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Topic</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Scheduled Time</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Instructor</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Duration</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Status</th>
+                      <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {allClasses.map((classItem) => {
+                      const isLive = classItem.status === 'live'
+                      const isUpcoming = classItem.status === 'upcoming'
+                      const isCompleted = classItem.status === 'completed'
+                      
+                      const statusConfig = {
+                        'upcoming': { label: 'Upcoming', color: 'bg-blue-100 text-blue-800' },
+                        'live': { label: 'Live', color: 'bg-red-100 text-red-800' },
+                        'completed': { label: 'Inactive', color: 'bg-gray-100 text-gray-800' }
+                      }
+                      
+                      const status = statusConfig[classItem.status] || { label: classItem.status, color: 'bg-gray-100 text-gray-800' }
+                      
+                      return (
+                        <tr key={classItem._id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm text-gray-900 font-medium">{classItem.subject || classItem.name}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{classItem.topic || classItem.description}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{formatDateTime(classItem.startTime)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{classItem.instructor || classItem.instructorName}</td>
+                          <td className="px-4 py-3 text-sm text-gray-700">{classItem.duration} mins</td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${status.color}`}>
+                              {status.label}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {isLive ? (
+                              <button 
+                                onClick={() => handleJoinClass(classItem)}
+                                className="text-blue-600 hover:text-blue-900 font-medium text-sm"
+                              >
+                                Join
+                              </button>
+                            ) : isUpcoming ? (
+                              <button className="text-gray-500 text-sm cursor-not-allowed">
+                                Scheduled
+                              </button>
+                            ) : (
+                              <button className="text-gray-500 text-sm cursor-not-allowed">
+                                Completed
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No classes found</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -176,15 +237,19 @@ const StudentClasses = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-700">Total Classes</span>
-                <span className="font-bold text-blue-600">{classes.length}</span>
+                <span className="font-bold text-blue-600">{allClasses.length}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-700">Upcoming</span>
-                <span className="font-bold text-yellow-600">{upcomingClasses.length}</span>
+                <span className="font-bold text-yellow-600">{upcomingClasses.filter(c => c.status === 'upcoming').length}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-700">Recordings</span>
-                <span className="font-bold text-purple-600">{recordedClasses.length}</span>
+                <span className="text-gray-700">Live</span>
+                <span className="font-bold text-red-600">{upcomingClasses.filter(c => c.status === 'live').length}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700">Completed</span>
+                <span className="font-bold text-gray-600">{allClasses.filter(c => c.status === 'completed').length}</span>
               </div>
             </div>
           </div>
@@ -193,12 +258,12 @@ const StudentClasses = () => {
           <div className="card">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
             <div className="space-y-3">
-              {upcomingClasses.length > 0 && (
+              {upcomingClasses.filter(c => c.status === 'live').length > 0 && (
                 <button 
-                  onClick={() => handleJoinClass(upcomingClasses[0])}
+                  onClick={() => handleJoinClass(upcomingClasses.find(c => c.status === 'live'))}
                   className="w-full btn-primary py-3"
                 >
-                  🎥 Join Next Class
+                  🎥 Join Live Class
                 </button>
               )}
               <button className="w-full btn-secondary py-3">

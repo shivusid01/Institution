@@ -9,6 +9,10 @@ const AdminDashboard = () => {
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(false)
   
+  // Error states for validation
+  const [errors, setErrors] = useState({})
+  const [touched, setTouched] = useState({})
+  
   // Registration form state
   const [formData, setFormData] = useState({
     name: '',
@@ -39,87 +43,204 @@ const AdminDashboard = () => {
     }
   }
 
+  // Validation function for each field
+  const validateField = (name, value) => {
+    let error = "";
+
+    switch (name) {
+      case "name":
+        if (!value || value.trim() === '') {
+          error = "Name is required";
+        } else if (!/^[A-Za-z\s]{2,}$/.test(value)) {
+          error = "Name must contain only letters and at least 2 characters";
+        }
+        break;
+
+      case "email":
+        if (!value || value.trim() === '') {
+          error = "Email is required";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          error = "Enter a valid email address";
+        }
+        break;
+
+      case "phone":
+        if (!value || value.trim() === '') {
+          error = "Phone number is required";
+        } else if (!/^\d{10}$/.test(value)) {
+          error = "Phone number must be exactly 10 digits";
+        }
+        break;
+
+      case "parentPhone":
+        if (!value || value.trim() === '') {
+          error = "Parent's phone is required";
+        } else if (!/^\d{10}$/.test(value)) {
+          error = "Parent's phone must be exactly 10 digits";
+        }
+        break;
+
+      case "class":
+        if (!value) {
+          error = "Please select a class";
+        }
+        break;
+
+      case "enrollmentDate":
+        if (!value) {
+          error = "Enrollment date is required";
+        } else if (new Date(value) > new Date()) {
+          error = "Enrollment date cannot be in the future";
+        }
+        break;
+
+      case "address":
+        if (!value || value.trim() === '') {
+          error = "Address is required";
+        } else if (value.trim().length < 10) {
+          error = "Address must be at least 10 characters";
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    return error;
+  };
+
+  // Handle input change with validation
   const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData({
-      ...formData,
-      [name]: value
-    })
-  }
+    let { name, value } = e.target;
+
+    // Remove non-numeric for phone fields
+    if (name === "phone" || name === "parentPhone") {
+      value = value.replace(/\D/g, "");
+    }
+
+    setFormData({ ...formData, [name]: value });
+
+    // Validate if field has been touched
+    if (touched[name]) {
+      setErrors({
+        ...errors,
+        [name]: validateField(name, value),
+      });
+    }
+  };
+
+  // Handle blur for real-time validation
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+
+    setTouched({ ...touched, [name]: true });
+
+    setErrors({
+      ...errors,
+      [name]: validateField(name, value),
+    });
+  };
+
+  // Check if entire form is valid
+  // Check if entire form is valid (without setting errors)
+const isFormValid = () => {
+  // Just check if there are any errors in the current errors state
+  // AND all required fields have values
+  const requiredFields = ['name', 'email', 'phone', 'parentPhone', 'class', 'address', 'enrollmentDate'];
+  
+  // Check if all required fields are filled
+  const allFieldsFilled = requiredFields.every(field => 
+    formData[field] && formData[field].toString().trim() !== ''
+  );
+  
+  // Check if there are any errors in the errors state
+  const hasNoErrors = Object.values(errors).every(error => !error);
+  
+  return allFieldsFilled && hasNoErrors;
+};
 
   const handleRegisterStudent = async (e) => {
-  e.preventDefault()
-  
-  // Validate form
-  if (!formData.name || !formData.email || !formData.phone) {
-    alert('Name, email, and phone are required!')
-    return
-  }
-
-  try {
-    setLoading(true)
+    e.preventDefault()
     
-    // Generate enrollment ID
-    const enrollmentId = `ENR${Date.now().toString().slice(-6)}${Math.random().toString(36).substr(2, 3).toUpperCase()}`
-    
-    // Prepare student data
-    const studentData = {
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      parentPhone: formData.parentPhone,
-      class: formData.class,
-      address: formData.address,
-      enrollmentDate: formData.enrollmentDate,
-      enrollmentId: enrollmentId,
-      // password will be set by backend
-      role: 'student',
-      status: 'active'
-    }
-
-    console.log('📤 Sending student data to backend:', studentData)
-
-    const response = await userAPI.registerStudent(studentData)
-    
-    console.log('✅ Backend response:', response.data)
-    
-    if (response.data.success) {
-      alert(`✅ Student registered successfully!\n\nEnrollment ID: ${enrollmentId}\nEmail: ${formData.email}\nPassword: welcome123`)
+    // Validate entire form before submission
+    if (!isFormValid()) {
+      // Mark all fields as touched to show errors
+      const allTouched = {};
+      Object.keys(formData).forEach(key => {
+        allTouched[key] = true;
+      });
+      setTouched(allTouched);
       
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        parentPhone: '',
-        class: '',
-        address: '',
-        enrollmentDate: new Date().toISOString().split('T')[0]
-      })
+      alert('Please fix all errors before submitting');
+      return;
+    }
+
+    try {
+      setLoading(true)
       
-      // Refresh student list
-      fetchAllStudents()
-      setActiveTab('students')
-    } else {
-      alert(`❌ Registration failed: ${response.data.message}`)
+      // Generate enrollment ID
+      const enrollmentId = `ENR${Date.now().toString().slice(-6)}${Math.random().toString(36).substr(2, 3).toUpperCase()}`
+      
+      // Prepare student data
+      const studentData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        parentPhone: formData.parentPhone,
+        class: formData.class,
+        address: formData.address,
+        enrollmentDate: formData.enrollmentDate,
+        enrollmentId: enrollmentId,
+        role: 'student',
+        status: 'active'
+      }
+
+      console.log('📤 Sending student data to backend:', studentData)
+
+      const response = await userAPI.registerStudent(studentData)
+      
+      console.log('✅ Backend response:', response.data)
+      
+      if (response.data.success) {
+        alert(`✅ Student registered successfully!\n\nEnrollment ID: ${enrollmentId}\nEmail: ${formData.email}\nPassword: welcome123`)
+        
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          parentPhone: '',
+          class: '',
+          address: '',
+          enrollmentDate: new Date().toISOString().split('T')[0]
+        })
+        
+        // Reset validation states
+        setErrors({})
+        setTouched({})
+        
+        // Refresh student list
+        fetchAllStudents()
+        setActiveTab('students')
+      } else {
+        alert(`❌ Registration failed: ${response.data.message}`)
+      }
+      
+    } catch (error) {
+      console.error('❌ Registration error:', error)
+      
+      if (error.response?.data?.message) {
+        alert(`❌ Error: ${error.response.data.message}`)
+      } else if (error.response?.data?.error) {
+        alert(`❌ Error: ${error.response.data.error}`)
+      } else {
+        alert('❌ Failed to register student. Please try again.')
+      }
+      
+    } finally {
+      setLoading(false)
     }
-    
-  } catch (error) {
-    console.error('❌ Registration error:', error)
-    
-    // Show actual error message from backend
-    if (error.response?.data?.message) {
-      alert(`❌ Error: ${error.response.data.message}`)
-    } else if (error.response?.data?.error) {
-      alert(`❌ Error: ${error.response.data.error}`)
-    } else {
-      alert('❌ Failed to register student. Please try again.')
-    }
-    
-  } finally {
-    setLoading(false)
   }
-}
 
   const handleDeleteStudent = async (studentId) => {
     if (!window.confirm('Are you sure you want to delete this student?')) {
@@ -154,7 +275,6 @@ Instructions:
 3. Change password after first login
     `
     
-    // Copy to clipboard
     navigator.clipboard.writeText(credentials)
       .then(() => {
         alert('Credentials copied to clipboard!')
@@ -169,9 +289,10 @@ Instructions:
   const classOptions = [
     'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
     'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
-    'Class 11 (Science)', 'Class 12 (Science)',
-    'Class 11 (Commerce)', 'Class 12 (Commerce)',
-    'JEE Preparation', 'NEET Preparation', 'UPSC Foundation'
+    'Class 11 (Commerce)', 'Class 12 (Commerce)', 'B.COM 1st Year',
+    'B.COM 2nd Year',
+    'B.COM 3rd Year','M.COM',
+    'Competition'
   ]
 
   return (
@@ -225,10 +346,15 @@ Instructions:
                       name="name"
                       value={formData.name}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       required
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full border rounded-lg px-4 py-3 focus:ring-2 
+                      ${errors.name && touched.name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'}`}
                       placeholder="Enter student's full name"
                     />
+                    {errors.name && touched.name && (
+                      <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                    )}
                   </div>
 
                   {/* Email */}
@@ -241,13 +367,18 @@ Instructions:
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       required
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full border rounded-lg px-4 py-3 focus:ring-2 
+                      ${errors.email && touched.email ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'}`}
                       placeholder="student@example.com"
                     />
+                    {errors.email && touched.email && (
+                      <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                    )}
                   </div>
 
-                  {/* Phone */}
+                  {/* Student's Phone */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Student's Phone *
@@ -257,10 +388,16 @@ Instructions:
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       required
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      maxLength="10"
+                      className={`w-full border rounded-lg px-4 py-3 focus:ring-2 
+                      ${errors.phone && touched.phone ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'}`}
                       placeholder="9876543210"
                     />
+                    {errors.phone && touched.phone && (
+                      <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                    )}
                   </div>
 
                   {/* Parent Phone */}
@@ -273,10 +410,16 @@ Instructions:
                       name="parentPhone"
                       value={formData.parentPhone}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       required
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      maxLength="10"
+                      className={`w-full border rounded-lg px-4 py-3 focus:ring-2 
+                      ${errors.parentPhone && touched.parentPhone ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'}`}
                       placeholder="9876543210"
                     />
+                    {errors.parentPhone && touched.parentPhone && (
+                      <p className="text-red-500 text-sm mt-1">{errors.parentPhone}</p>
+                    )}
                   </div>
 
                   {/* Class */}
@@ -288,14 +431,19 @@ Instructions:
                       name="class"
                       value={formData.class}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       required
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full border rounded-lg px-4 py-3 focus:ring-2 
+                      ${errors.class && touched.class ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'}`}
                     >
                       <option value="">Select Class</option>
                       {classOptions.map((cls, index) => (
                         <option key={index} value={cls}>{cls}</option>
                       ))}
                     </select>
+                    {errors.class && touched.class && (
+                      <p className="text-red-500 text-sm mt-1">{errors.class}</p>
+                    )}
                   </div>
 
                   {/* Enrollment Date */}
@@ -308,9 +456,15 @@ Instructions:
                       name="enrollmentDate"
                       value={formData.enrollmentDate}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       required
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      max={new Date().toISOString().split('T')[0]}
+                      className={`w-full border rounded-lg px-4 py-3 focus:ring-2 
+                      ${errors.enrollmentDate && touched.enrollmentDate ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'}`}
                     />
+                    {errors.enrollmentDate && touched.enrollmentDate && (
+                      <p className="text-red-500 text-sm mt-1">{errors.enrollmentDate}</p>
+                    )}
                   </div>
 
                   {/* Address - Full Width */}
@@ -322,11 +476,16 @@ Instructions:
                       name="address"
                       value={formData.address}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       required
                       rows="3"
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full border rounded-lg px-4 py-3 focus:ring-2 
+                      ${errors.address && touched.address ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'}`}
                       placeholder="Full residential address"
                     />
+                    {errors.address && touched.address && (
+                      <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+                    )}
                   </div>
                 </div>
 
@@ -334,8 +493,8 @@ Instructions:
                 <div className="mt-8">
                   <button
                     type="submit"
-                    disabled={loading}
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl text-lg transition-all disabled:opacity-50"
+                    disabled={loading || !isFormValid()}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (
                       <div className="flex items-center justify-center">
@@ -357,6 +516,8 @@ Instructions:
               </form>
             </div>
           )}
+
+          
 
           {/* All Students List */}
           {activeTab === 'students' && (
@@ -521,41 +682,28 @@ Instructions:
 
         {/* Right Column - Quick Actions */}
         <div>
-         // AdminDashboard.js में Quick Actions section update करें:
-
-{/* Quick Actions */}
-<div className="bg-white rounded-xl shadow-md p-6 mb-8">
-  <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h2>
-  <div className="grid grid-cols-2 gap-4">
-    <Link to="/admin/courses" className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors">
-      <span className="text-3xl mb-2">🎥</span>
-      <span className="font-medium text-center">Class Control</span>
-    </Link>
-    <Link to="/admin/students" className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors">
-      <span className="text-3xl mb-2">👨‍🎓</span>
-      <span className="font-medium text-center">Manage Students</span>
-    </Link>
-    {/* <Link to="/admin/classes" className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors">
-      <span className="text-3xl mb-2">🎥</span>
-      <span className="font-medium text-center">Class Control</span>
-    </Link> */}
-    <Link to="/admin/payments" className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors">
-      <span className="text-3xl mb-2">💰</span>
-      <span className="font-medium text-center">Payment Records</span>
-    </Link>
-   <Link to="/admin/notices" className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors">
-  <span className="text-3xl mb-2">📢</span>
-  <span className="font-medium text-center">Notices</span>
-</Link>
-   {/* <button 
-      onClick={() => window.location.href = "/admin/courses?showModal=true"}
-      className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors cursor-pointer"
-    >
-      <span className="text-3xl mb-2">📅</span>
-      <span className="font-medium text-center">Schedule Class</span>
-    </button> */}
-  </div>
-</div>
+          {/* Quick Actions */}
+          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <Link to="/admin/courses" className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors">
+                <span className="text-3xl mb-2">🎥</span>
+                <span className="font-medium text-center">Class Control</span>
+              </Link>
+              <Link to="/admin/students" className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors">
+                <span className="text-3xl mb-2">👨‍🎓</span>
+                <span className="font-medium text-center">Manage Students</span>
+              </Link>
+              <Link to="/admin/payments" className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors">
+                <span className="text-3xl mb-2">💰</span>
+                <span className="font-medium text-center">Payment Records</span>
+              </Link>
+              <Link to="/admin/notices" className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors">
+                <span className="text-3xl mb-2">📢</span>
+                <span className="font-medium text-center">Notices</span>
+              </Link>
+            </div>
+          </div>
 
           {/* Registration Stats */}
           <div className="bg-white rounded-xl shadow-md p-6">
@@ -607,15 +755,6 @@ Instructions:
                 <div className="text-2xl font-bold">
                   {new Set(students.map(s => s.class)).size}
                 </div>
-              </div>
-
-              <div className="pt-4 border-t border-gray-200">
-                {/* <button
-                  onClick={() => setActiveTab('register')}
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-3 rounded-lg transition-all"
-                >
-                  + Register New Student
-                </button> */}
               </div>
             </div>
           </div>

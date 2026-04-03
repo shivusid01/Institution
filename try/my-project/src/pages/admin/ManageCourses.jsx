@@ -30,24 +30,20 @@ const ManageCourses = () => {
     { id: "class12_science", name: "Class 12 (Science)", type: "class", category: "Science" },
     { id: "class11_commerce", name: "Class 11 (Commerce)", type: "class", category: "Commerce" },
     { id: "class12_commerce", name: "Class 12 (Commerce)", type: "class", category: "Commerce" },
-    { id: "jee_prep", name: "JEE Preparation", type: "course", category: "Engineering" },
-    { id: "neet_prep", name: "NEET Preparation", type: "course", category: "Medical" },
-    { id: "upsc_foundation", name: "UPSC Foundation", type: "course", category: "Civil Services" },
-    { id: "math_course", name: "Mathematics", type: "course", category: "All Classes" },
-    { id: "physics_course", name: "Physics", type: "course", category: "All Classes" },
-    { id: "chemistry_course", name: "Chemistry", type: "course", category: "All Classes" },
-    { id: "biology_course", name: "Biology", type: "course", category: "All Classes" },
-    { id: "english_course", name: "English", type: "course", category: "All Classes" },
-    { id: "social_science_course", name: "Social Science", type: "course", category: "All Classes" },
-    { id: "computer_course", name: "Computer Science", type: "course", category: "All Classes" },
+    { id: "bcom1", name: "B.COM 1st Year", type: "class", category: "Commerce" },
+    { id: "bcom2", name: "B.COM 2nd Year", type: "class", category: "Commerce" },
+    { id: "bcom3", name: "B.COM 3rd Year", type: "class", category: "Commerce" },
+    { id: "mcom", name: "M.COM", type: "class", category:
+      "Commerce" },
+    { id: "competition", name: "Competition", type: "class", category: "Competitive Exams" },
   ];
 
   // Mock Instructor Names (Select Option)
   const instructorOptions = [
-    { id: 1, name: "Dr. Ravi Sharma" },
-    { id: 2, name: "Prof. Anjali Singh" },
-    { id: 3, name: "Dr. Vikram Mehta" },
-    { id: 4, name: "Ms. Priya Gupta" },
+    { id: 1, name: "Mr. Jeetlal Sharma " },
+    { id: 2, name: "Ashok Sharma" },
+    { id: 3, name: "Chandra Bhushan Kumar" },
+    { id: 4, name: "Meenu sharma" },
   ];
 
   // Time Duration Options
@@ -104,88 +100,108 @@ const ManageCourses = () => {
     }
   }
 
-  const handleAddCourse = async () => {
-    console.log('🔍 handleAddCourse called');
-    console.log('Topic value:', newCourse.topic);
-    
-    if (!newCourse.selectedOption) {
-      alert('Please select a class or course');
-      return;
+ const handleAddCourse = async () => {
+  console.log('🔍 handleAddCourse called');
+  console.log('Topic value:', newCourse.topic);
+
+  if (!newCourse.selectedOption) {
+    alert('Please select a class or course');
+    return;
+  }
+
+  if (!newCourse.topic || newCourse.topic.trim() === '') {
+    alert('Please enter class topic');
+    return;
+  }
+
+  if (!newCourse.startTime) {
+    alert('Please select start time');
+    return;
+  }
+
+  if (!newCourse.meetingLink) {
+    alert('Please provide meeting link');
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const selectedOption = availableOptions.find(
+      opt => opt.id === newCourse.selectedOption
+    );
+
+    // =========================
+    // 1️⃣ CREATE COURSE FIRST
+    // =========================
+    await courseAPI.createCourse({
+      name: selectedOption ? selectedOption.name : newCourse.name,
+      category: selectedOption ? selectedOption.category : 'General',
+      instructor: newCourse.instructorName,
+      description:
+        newCourse.description ||
+        `Course for ${selectedOption?.name || 'New Course'}`,
+      status: 'active'
+    });
+
+    console.log('✅ Course created successfully');
+
+    // =========================
+    // 2️⃣ CREATE CLASS
+    // =========================
+    const classData = {
+      title: selectedOption ? selectedOption.name : newCourse.name,
+      description:
+        newCourse.description ||
+        `Class for ${selectedOption?.name || 'New Class'}`,
+      category: selectedOption ? selectedOption.category : 'General',
+      subject: selectedOption ? selectedOption.name : newCourse.name,
+      topic: newCourse.topic.trim(),
+      startTime: newCourse.startTime,
+      duration: newCourse.duration,
+      meetingLink: newCourse.meetingLink,
+      meetingPlatform: newCourse.meetingPlatform,
+      instructorName: newCourse.instructorName,
+      instructorId: currentUser._id,
+      targetAudience: ['all'],
+      visibility: 'all_students'
+    };
+
+    console.log('📤 Sending class data:', classData);
+
+    const response = await classAPI.createClass(classData);
+
+    console.log('✅ Class Response:', response.data);
+
+    if (response.data.success) {
+      alert('✅ Course & Class scheduled successfully!');
+
+      setShowAddModal(false);
+      resetNewCourseForm();
+
+      await Promise.all([
+        fetchCourses(),
+        fetchUpcomingClasses()
+      ]);
     }
 
-    if (!newCourse.topic || newCourse.topic.trim() === '') {
-      alert('Please enter class topic');
-      return;
+  } catch (error) {
+    console.error('❌ Error scheduling class:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+
+    if (error.response?.data?.message) {
+      alert(`Error: ${error.response.data.message}`);
+    } else {
+      alert('Failed to schedule class. Please check console.');
     }
 
-    if (!newCourse.startTime) {
-      alert('Please select start time');
-      return;
-    }
-
-    if (!newCourse.meetingLink) {
-      alert('Please provide meeting link');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      
-      const selectedOption = availableOptions.find(opt => opt.id === newCourse.selectedOption);
-      
-      const classData = {
-        title: selectedOption ? selectedOption.name : newCourse.name,
-        description: newCourse.description || `Class for ${selectedOption?.name || 'New Class'}`,
-        category: selectedOption ? selectedOption.category : 'General',
-        subject: selectedOption ? selectedOption.name : newCourse.name,
-        topic: newCourse.topic.trim(),
-        startTime: newCourse.startTime,
-        duration: newCourse.duration,
-        meetingLink: newCourse.meetingLink,
-        meetingPlatform: newCourse.meetingPlatform,
-        instructorName: newCourse.instructorName,
-        instructorId: currentUser._id,
-        targetAudience: ['all'],
-        visibility: 'all_students'
-      };
-      
-      console.log('📤 Sending class data:', classData);
-      
-      const response = await classAPI.createClass(classData);
-      
-      console.log('✅ Response:', response.data);
-      
-      if (response.data.success) {
-        alert('✅ Class scheduled successfully! All students can now see this class.');
-        
-        setShowAddModal(false);
-        resetNewCourseForm();
-        
-        // Refresh both
-        await Promise.all([
-          fetchCourses(),
-          fetchUpcomingClasses()
-        ]);
-      }
-      
-    } catch (error) {
-      console.error('❌ Error scheduling class:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
-      
-      if (error.response?.data?.message) {
-        alert(`Error: ${error.response.data.message}`);
-      } else if (error.response?.status === 404) {
-        alert('❌ Class API not found! Please make sure:\n1. Backend server is running\n2. Class routes are added\n3. Server is restarted');
-      } else {
-        alert('Failed to schedule class. Please check console.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   // ✅ NEW FUNCTION: Delete Class
   const handleDeleteClass = async (classId) => {
@@ -279,7 +295,7 @@ const ManageCourses = () => {
     ? courses 
     : courses.filter(course => course.status === activeTab)
 
-  const categories = ['All', 'Active', 'Inactive', 'Engineering', 'Medical', 'School', 'Commerce', 'Science', 'Civil Services']
+  const categories = ['All', 'Active', 'Inactive']
 
   // Format time for display
   const formatTime = (dateString) => {
@@ -338,6 +354,37 @@ const ManageCourses = () => {
             <div className="p-3 rounded-full bg-orange-100 text-orange-600">
               <span className="text-2xl">📅</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+
+       <div className="card mb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setActiveTab(category.toLowerCase())}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  activeTab === category.toLowerCase()
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={() => setShowAddModal(true)}
+              className="btn-primary flex items-center"
+            >
+              <span className="mr-2">➕</span>
+              Add New Course & Schedule Class
+            </button>
           </div>
         </div>
       </div>
@@ -414,152 +461,121 @@ const ManageCourses = () => {
       )}
 
       {/* Controls */}
-      <div className="card mb-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setActiveTab(category.toLowerCase())}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  activeTab === category.toLowerCase()
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <button 
-              onClick={() => setShowAddModal(true)}
-              className="btn-primary flex items-center"
-            >
-              <span className="mr-2">➕</span>
-              Add New Course & Schedule Class
-            </button>
-          </div>
-        </div>
-      </div>
+     
 
       {/* Courses Table */}
       <div className="card">
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="text-gray-600 mt-4">Loading courses...</p>
-          </div>
-        ) : courses.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-4xl mb-4">📚</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">No Courses Found</h3>
-            <p className="text-gray-600">Add your first course to get started</p>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium"
-            >
-              Add First Course
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course/Class</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filteredCourses.map((course) => (
-                    <tr key={course._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center mr-3">
-                            <span className="text-blue-600">
-                              {course.classType === 'course' ? '🎓' : '📚'}
-                            </span>
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-900">{course.name}</div>
-                            {course.description && (
-                              <div className="text-sm text-gray-500 truncate max-w-xs">
-                                {course.description}
-                              </div>
-                            )}
-                          </div>
+  {loading ? (
+    <div className="text-center py-12">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+      <p className="text-gray-600 mt-4">Loading courses...</p>
+    </div>
+  ) : (
+    <>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead>
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course/Class</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {filteredCourses.map((course) => (
+              <tr key={course._id} className="hover:bg-gray-50">
+                <td className="px-6 py-4">
+                  <div className="flex items-center">
+                    <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center mr-3">
+                      <span className="text-blue-600">
+                        {course.classType === 'course' ? '🎓' : '📚'}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">{course.name}</div>
+                      {course.description && (
+                        <div className="text-sm text-gray-500 truncate max-w-xs">
+                          {course.description}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">
-                          {course.category}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium">{course.totalStudents || 0}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium">{course.instructor || 'Not assigned'}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          course.status === 'active'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {course.status?.charAt(0).toUpperCase() + course.status?.slice(1) || 'Active'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => {
-                              setSelectedCourse(course)
-                              setNewCourse({
-                                selectedOption: '',
-                                name: course.name,
-                                description: course.description || '',
-                                instructor: course.instructor || '',
-                                instructorName: course.instructor || '',
-                                status: course.status || 'active'
-                              })
-                              setShowEditModal(true)
-                            }}
-                            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCourse(course._id)}
-                            className="text-red-600 hover:text-red-700 text-sm font-medium"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      )}
+                    </div>
+                  </div>
+                </td>
 
-            {/* Pagination */}
-            <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
-              <div className="text-sm text-gray-700">
-                Showing <span className="font-medium">1</span> to <span className="font-medium">{filteredCourses.length}</span> of{' '}
-                <span className="font-medium">{courses.length}</span> courses
-              </div>
-            </div>
-          </>
-        )}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">
+                    {course.category}
+                  </span>
+                </td>
+
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="font-medium">{course.totalStudents || 0}</div>
+                </td>
+
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="font-medium">{course.instructor || 'Not assigned'}</div>
+                </td>
+
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      course.status === 'active'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                  >
+                    {course.status?.charAt(0).toUpperCase() +
+                      course.status?.slice(1) || 'Active'}
+                  </span>
+                </td>
+
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => {
+                        setSelectedCourse(course)
+                        setNewCourse({
+                          selectedOption: '',
+                          name: course.name,
+                          description: course.description || '',
+                          instructor: course.instructor || '',
+                          instructorName: course.instructor || '',
+                          status: course.status || 'active'
+                        })
+                        setShowEditModal(true)
+                      }}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteCourse(course._id)}
+                      className="text-red-600 hover:text-red-700 text-sm font-medium"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+
+      <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
+        <div className="text-sm text-gray-700">
+          Showing <span className="font-medium">1</span> to{' '}
+          <span className="font-medium">{filteredCourses.length}</span> of{' '}
+          <span className="font-medium">{courses.length}</span> courses
+        </div>
+      </div>
+    </>
+  )}
+</div>
 
       {/* Add Course Modal */}
       {showAddModal && (

@@ -1,34 +1,21 @@
 // src/components/home/HeroSection.jsx
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 
 const HeroSection = () => {
   return (
-    <motion.section 
+    <section 
       className="bg-gradient-to-r from-red-600 to-purple-900 text-white relative overflow-hidden"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.8 }}
     >
       {/* Animated Background Particles */}
       <div className="absolute inset-0">
         {[...Array(15)].map((_, i) => (
-          <motion.div
+          <div
             key={i}
             className="absolute w-1 h-1 bg-white/20 rounded-full"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -100],
-              opacity: [0, 1, 0],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: i * 0.2,
             }}
           />
         ))}
@@ -36,30 +23,21 @@ const HeroSection = () => {
       
       <div className="container mx-auto px-4 py-20 relative z-10">
         <div className="max-w-3xl">
-          <motion.h1 
+          <h1 
             className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6"
-            initial={{ opacity: 0, y: -30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
           >
             Excel in Your Academic Journey with Expert Guidance
-          </motion.h1>
+          </h1>
           
-          <motion.p 
+          <p 
             className="text-xl mb-8 text-red-100"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
           >
             Join Ramgarh's premier coaching institute for Academics, Bachelors Degree (For Commerce and Arts), JPSC, and board exams. 
             Proven track record of success with 1,000+ selections.
-          </motion.p>
+          </p>
           
-          <motion.div 
+          <div 
             className="flex flex-col sm:flex-row gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9 }}
           >
             <Link 
     to="/signup" 
@@ -73,10 +51,10 @@ const HeroSection = () => {
   >
     Explore Courses
   </Link>
-          </motion.div>
+          </div>
         </div>
       </div>
-    </motion.section>
+    </section>
   )
 }
 

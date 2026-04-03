@@ -1,23 +1,16 @@
 // src/components/Footer.jsx
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 
 const Footer = () => {
   return (
-    <motion.footer 
+    <footer 
       className="bg-gradient-to-r from-gray-800 to-gray-900 text-white"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.3 }}
     >
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
+          <div
           >
             <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-red-400 to-purple-400 bg-clip-text text-transparent">
               Sharma Institute
@@ -29,22 +22,16 @@ const Footer = () => {
               <br />
               academic excellence.
             </p>
-          </motion.div>
+          </div>
 
           {/* Quick Links */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+          <div
           >
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               {['Home', 'About Us', 'Courses', 'Contact'].map((link, index) => (
-                <motion.li 
+                <li 
                   key={link}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 + index * 0.1 }}
                 >
                   <Link 
                     to={`/${link.toLowerCase().replace(' ', '')}`} 
@@ -52,25 +39,19 @@ const Footer = () => {
                   >
                     {link}
                   </Link>
-                </motion.li>
+                </li>
               ))}
             </ul>
-          </motion.div>
+          </div>
 
           {/* Courses */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
+          <div
           >
             <h3 className="text-lg font-semibold mb-4">Popular Courses</h3>
             <ul className="space-y-2">
               {['Academics', 'Intermediate', 'Bachelor\'s Degree', 'Master\'s Degree', 'Competition'].map((course, index) => (
-                <motion.li 
+                <li 
                   key={course}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.7 + index * 0.1 }}
                 >
                   <a 
                     href="#" 
@@ -78,61 +59,43 @@ const Footer = () => {
                   >
                     {course}
                   </a>
-                </motion.li>
+                </li>
               ))}
             </ul>
-          </motion.div>
+          </div>
 
           {/* Contact */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.7 }}
+          <div
           >
             <h3 className="text-lg font-semibold mb-4">Contact Info</h3>
             <ul className="space-y-2 text-gray-400">
-              <motion.li
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.8 }}
+              <li
               >
                 NH-33 Ramanagar, Near CN College, Marar
-              </motion.li>
-              <motion.li
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.9 }}
+              </li>
+              <li
               >
                 Ramgarh, JH 829117
-              </motion.li>
-              <motion.li
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.0 }}
+              </li>
+              <li
               >
                 Mobile: +91 9934522519, 8226871287
-              </motion.li>
-              <motion.li
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.1 }}
+              </li>
+              <li
               >
                 Email: Sharmainstitute@gmail.com
-              </motion.li>
+              </li>
             </ul>
-          </motion.div>
+          </div>
         </div>
 
-        <motion.div 
+        <div 
           className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.2 }}
         >
           <p>&copy; {new Date().getFullYear()} Sharma Institute Pvt. Ltd. All rights reserved.</p>
-        </motion.div>
+        </div>
       </div>
-    </motion.footer>
+    </footer>
   )
 }
 

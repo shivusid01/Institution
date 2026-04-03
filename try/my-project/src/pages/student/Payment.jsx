@@ -366,10 +366,10 @@ const StudentPayment = () => {
                     </optgroup>
                     
                     {/* Senior Secondary - Science */}
-                    <optgroup label="Senior Secondary (Science)">
+                    {/* <optgroup label="Senior Secondary (Science)">
                       <option value="class11_science">Class 11 (Science) - ₹1,500/month</option>
                       <option value="class12_science">Class 12 (Science) - ₹1,500/month</option>
-                    </optgroup>
+                    </optgroup> */}
                     
                     {/* Senior Secondary - Commerce */}
                     <optgroup label="Senior Secondary (Commerce)">
@@ -379,9 +379,9 @@ const StudentPayment = () => {
                     
                     {/* Competitive Exams */}
                     <optgroup label="Competitive Exams">
-                      <option value="jee_prep">JEE Preparation - ₹2,000/month</option>
-                      <option value="neet_prep">NEET Preparation - ₹2,000/month</option>
-                      <option value="upsc_foundation">UPSC Foundation - ₹1,800/month</option>
+                      <option value="competition">Competition - ₹1,000/month</option>
+                      {/* <option value="neet_prep">NEET Preparation - ₹2,000/month</option>
+                      <option value="upsc_foundation">UPSC Foundation - ₹1,800/month</option> */}
                     </optgroup>
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3">

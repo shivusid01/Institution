@@ -1,5 +1,5 @@
 // src/App.jsx
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { 
   BrowserRouter as Router, 
   Routes, 
@@ -33,12 +33,31 @@ import NoticesManagement from './pages/admin/NoticesManagement'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
 function App() {
+  const [cursor, setCursor] = useState({ x: -100, y: -100, active: false })
+
+  useEffect(() => {
+    const handleMouseMove = (event) => {
+      setCursor({ x: event.clientX, y: event.clientY, active: true })
+    }
+    const handleMouseLeave = () => {
+      setCursor((prev) => ({ ...prev, active: false }))
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseleave', handleMouseLeave)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseleave', handleMouseLeave)
+    }
+  }, [])
+
   return (
     <Router future={{ v7_relativeSplatPath: true }}> 
       <AuthProvider>
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col fade-in-page">
           <Navbar />
-          <main className="flex-grow">
+          <main className="flex-grow fade-in">
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Home />} />
@@ -76,6 +95,12 @@ function App() {
             </Routes>
           </main>
           <Footer />
+
+          <div
+            className={`custom-cursor ${cursor.active ? 'cursor-active' : ''}`}
+            style={{ left: cursor.x, top: cursor.y }}
+            aria-hidden="true"
+          />
         </div>
       </AuthProvider>
     </Router>

@@ -12,27 +12,29 @@ const classSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    required: [true, 'Category is required']
+    enum: ['School', 'Science', 'Commerce', 'Competitive Exams', 'General'],
+    default: 'General'
   },
   subject: {
     type: String,
-    required: [true, 'Subject is required']
+    required: [true, 'Subject is required'],
+    trim: true
   },
   topic: {
     type: String,
-    required: [true, 'Topic is required']
+    required: [true, 'Topic is required'],
+    trim: true
   },
   startTime: {
     type: Date,
-    required: [true, 'Start time is required']
+    required: [true, 'Start time is required'],
+    index: true
   },
   duration: {
     type: Number, // in minutes
     required: [true, 'Duration is required'],
-    min: 15
-  },
-  endTime: {
-    type: Date
+    min: 15,
+    max: 240
   },
   meetingLink: {
     type: String,
@@ -52,18 +54,28 @@ const classSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   status: {
     type: String,
-    enum: ['scheduled', 'live', 'completed', 'cancelled'],
-    default: 'scheduled'
+    enum: ['upcoming', 'live', 'completed', 'cancelled'],
+    default: 'upcoming',
+    index: true
   },
-  visibility: {
+  recording: {
     type: String,
-    enum: ['all_students', 'specific_course'],
-    default: 'all_students'
+    default: ''
   },
-  targetAudience: [{
-    type: String
+  materials: [{
+    title: String,
+    fileUrl: String,
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    }
   }],
   attendees: [{
     studentId: {
@@ -71,31 +83,56 @@ const classSchema = new mongoose.Schema({
       ref: 'User'
     },
     joinedAt: Date,
-    durationAttended: Number
+    leftAt: Date
   }],
-  recordingLink: {
-    type: String
-  },
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+  targetAudience: [{
+    type: String,
+    enum: ['all', 'class1', 'class2', 'class3', 'class4', 'class5', 'class6', 'class7', 'class8', 'class9', 'class10', 'class11_commerce', 'class12_commerce', 'bcom1', 'bcom2', 'bcom3', 'mcom', 'competition']
+  }],
+  visibility: {
+    type: String,
+    enum: ['all_students', 'specific_classes', 'private'],
+    default: 'all_students'
   }
 }, {
   timestamps: true
 });
 
-// Auto-calculate endTime
+// Virtual for end time
+classSchema.virtual('endTime').get(function() {
+  return new Date(this.startTime.getTime() + this.duration * 60000);
+});
+
+// Method to check if class is live
+classSchema.methods.isLive = function() {
+  const now = new Date();
+  const endTime = this.endTime;
+  return now >= this.startTime && now <= endTime;
+};
+
+// Method to check if class is completed
+classSchema.methods.isCompleted = function() {
+  const now = new Date();
+  const endTime = this.endTime;
+  return now > endTime;
+};
+
+// Pre-save middleware to auto-update status
 classSchema.pre('save', function(next) {
-  if (this.startTime && this.duration) {
-    this.endTime = new Date(this.startTime.getTime() + this.duration * 60000);
+  const now = new Date();
+  const endTime = this.endTime;
+  
+  if (now > endTime) {
+    this.status = 'completed';
+  } else if (now >= this.startTime && now <= endTime) {
+    this.status = 'live';
   }
+  
   next();
 });
 
-// Indexes for faster queries
+// Index for automatic cleanup queries
 classSchema.index({ startTime: 1, status: 1 });
-classSchema.index({ instructorId: 1 });
-classSchema.index({ status: 1, startTime: 1 });
+classSchema.index({ 'attendees.studentId': 1 });
 
 module.exports = mongoose.model('Class', classSchema);

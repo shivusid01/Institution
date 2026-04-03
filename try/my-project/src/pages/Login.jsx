@@ -20,7 +20,7 @@ const Login = () => {
       [name]: value
     }));
 
-    if (errors[name]) {z
+    if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: "" }));
     }
     if (errors.general) {
@@ -121,7 +121,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-12 px-4">
+    <div className="min-h-[80vh] flex items-center justify-center py-12 px-4 fade-in">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>

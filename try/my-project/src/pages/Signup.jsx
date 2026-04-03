@@ -10,8 +10,7 @@ const Signup = () => {
     phone: '',
     password: '',
     confirmPassword: '',
-    course: '',
-    grade: ''
+    course: ''  // Using 'course' as field name
   })
   
   const [errors, setErrors] = useState({})
@@ -19,34 +18,56 @@ const Signup = () => {
   const { signup } = useAuth()
   const navigate = useNavigate()
 
+  // Updated courses array as per requirement
   const courses = [
-    'JEE Main & Advanced',
-    'NEET UG',
-    'UPSC Foundation',
-    'CBSE 11-12 (Science)',
-    'CBSE 11-12 (Commerce)',
-    'CA Foundation',
-    'Foundation (Class 9-10)',
-    'Other'
-  ]
+    // Primary (1-5)
+    'Class 1',
+    'Class 2',
+    'Class 3',
+    'Class 4',
+    'Class 5',
 
-  const grades = [
+    // Middle (6-8)
+    'Class 6',
+    'Class 7',
+    'Class 8',
+
+    // Foundation
     'Class 9',
     'Class 10',
-    'Class 11',
-    'Class 12',
-    'College 1st Year',
-    'College 2nd Year',
-    'College 3rd Year',
-    'Graduate',
-    'Working Professional'
+
+    // Senior Secondary Commerce
+    'Class 11 (Commerce)',
+    'Class 12 (Commerce)',
+
+    // Graduation
+    'B.COM 1st Year',
+    'B.COM 2nd Year',
+    'B.COM 3rd Year',
+
+    // Post Graduation
+    'M.COM',
+
+    // Competition
+    'Competition Exams'
   ]
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
+    // For phone field, only allow numbers
+    if (e.target.name === 'phone') {
+      const value = e.target.value.replace(/\D/g, '')
+      setFormData({
+        ...formData,
+        [e.target.name]: value
+      })
+    } else {
+      setFormData({
+        ...formData,
+        [e.target.name]: e.target.value
+      })
+    }
+    
+    // Clear error for this field when user starts typing
     if (errors[e.target.name]) {
       setErrors({
         ...errors,
@@ -58,15 +79,43 @@ const Signup = () => {
   const validateForm = () => {
     const newErrors = {}
     
-    if (!formData.name.trim()) newErrors.name = 'Name is required'
-    if (!formData.email) newErrors.email = 'Email is required'
-    if (!formData.phone) newErrors.phone = 'Phone number is required'
-    if (!formData.password) newErrors.password = 'Password is required'
-    if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters'
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required'
+    } else if (!/^[A-Za-z\s]{2,}$/.test(formData.name)) {
+      newErrors.name = 'Name must contain only letters and at least 2 characters'
+    }
+    
+    // Email validation
+    if (!formData.email) {
+      newErrors.email = 'Email is required'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address'
+    }
+    
+    // Phone validation
+    if (!formData.phone) {
+      newErrors.phone = 'Phone number is required'
+    } else if (!/^\d{10}$/.test(formData.phone)) {
+      newErrors.phone = 'Phone number must be exactly 10 digits'
+    }
+    
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = 'Password is required'
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters'
+    }
+    
+    // Confirm password validation
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match'
     }
-    if (!formData.course) newErrors.course = 'Please select a course'
+    
+    // Course selection validation
+    if (!formData.course) {
+      newErrors.course = 'Please select your class/course'
+    }
     
     return newErrors
   }
@@ -83,13 +132,13 @@ const Signup = () => {
     setIsSubmitting(true)
 
     try {
+      // Prepare payload for backend
       const payload = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         password: formData.password,
-        course: formData.course,
-        grade: formData.grade
+        course: formData.course  // Sending selected course to backend
       }
 
       const result = await signup(payload)
@@ -109,7 +158,7 @@ const Signup = () => {
   }
 
   return (
-    <div className="min-h-[80vh] py-12 px-4">
+    <div className="min-h-[80vh] py-12 px-4 fade-in">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Create Your Account</h1>
@@ -176,8 +225,9 @@ const Signup = () => {
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
+                        maxLength="10"
                         className={`input-field ${errors.phone ? 'border-red-300' : ''}`}
-                        placeholder="Enter your phone"
+                        placeholder="Enter 10-digit phone number"
                       />
                       {errors.phone && (
                         <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
@@ -187,46 +237,29 @@ const Signup = () => {
                 </div>
               </div>
 
-              {/* Academic Information */}
+              {/* Class/Course Selection */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Academic Information</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Interested Course *
-                    </label>
-                    <select
-                      name="course"
-                      value={formData.course}
-                      onChange={handleChange}
-                      className={`input-field ${errors.course ? 'border-red-300' : ''}`}
-                    >
-                      <option value="">Select a course</option>
-                      {courses.map((course) => (
-                        <option key={course} value={course}>{course}</option>
-                      ))}
-                    </select>
-                    {errors.course && (
-                      <p className="mt-1 text-sm text-red-600">{errors.course}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Current Class/Grade
-                    </label>
-                    <select
-                      name="grade"
-                      value={formData.grade}
-                      onChange={handleChange}
-                      className="input-field"
-                    >
-                      <option value="">Select your grade</option>
-                      {grades.map((grade) => (
-                        <option key={grade} value={grade}>{grade}</option>
-                      ))}
-                    </select>
-                  </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Select Your Class / Course</h3>
+                <div>
+                  {/* <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Choose Your Class / Course *
+                  </label> */}
+                  <select
+                    name="course"
+                    value={formData.course}
+                    onChange={handleChange}
+                    className={`input-field ${errors.course ? 'border-red-300' : ''}`}
+                  >
+                    <option value="">Select Class / Course</option>
+                    {courses.map((course, index) => (
+                      <option key={index} value={course}>
+                        {course}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.course && (
+                    <p className="mt-1 text-sm text-red-600">{errors.course}</p>
+                  )}
                 </div>
               </div>
 

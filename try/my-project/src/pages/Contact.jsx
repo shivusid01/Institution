@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
-import { motion, AnimatePresence } from 'framer-motion'
 
 const Contact = () => {
   const { user } = useAuth()
@@ -185,103 +184,80 @@ const Contact = () => {
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="relative">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            <div
               className="w-20 h-20 border-4 border-red-200 border-t-red-600 rounded-full mx-auto mb-6"
             />
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
+            <div
               className="absolute inset-0 flex items-center justify-center"
             >
               <div className="w-8 h-8 bg-gradient-to-r from-red-600 to-purple-900 rounded-full"></div>
-            </motion.div>
+            </div>
           </div>
-          <motion.h2 
+          <h2 
             className="text-2xl font-bold bg-gradient-to-r from-red-600 to-purple-900 bg-clip-text text-transparent"
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
           >
             Loading Sharma Institute...
-          </motion.h2>
-          <motion.p 
+          </h2>
+          <p 
             className="text-gray-600 mt-4"
-            animate={{ opacity: [0.3, 0.7, 0.3] }}
-            transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
           >
             Connecting you with our team
-          </motion.p>
+          </p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-red-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-white to-red-50 py-12 px-4 sm:px-6 lg:px-8 fade-in">
       <div className="max-w-7xl mx-auto">
         {/* Contact Form - Big on Top */}
-        <motion.div 
+        <div 
           className="mb-16"
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
         >
           <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
             <div className="flex items-center mb-8">
-              <motion.div 
+              <div 
                 className="p-3 bg-gradient-to-r from-red-100 to-purple-100 rounded-lg mr-4"
-                whileHover={{ rotate: 360 }}
-                transition={{ duration: 0.5 }}
               >
                 <span className="text-2xl">✍️</span>
-              </motion.div>
+              </div>
               <h2 className="text-3xl font-bold bg-gradient-to-r from-red-600 to-purple-900 bg-clip-text text-transparent">
                 Send us a Message
               </h2>
             </div>
             
             {/* Messages */}
-            <AnimatePresence>
+            
               {error && (
-                <motion.div 
+                <div 
                   className="mb-6 p-4 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-lg"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
                 >
                   <div className="flex items-center">
-                    <motion.svg 
+                    <svg 
                       className="w-5 h-5 text-red-500 mr-3"
                       fill="currentColor" 
                       viewBox="0 0 20 20"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 0.5 }}
                     >
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </motion.svg>
+                    </svg>
                     <span className="text-red-800 font-medium">{error}</span>
                   </div>
-                </motion.div>
+                </div>
               )}
               
               {success && (
-                <motion.div 
+                <div 
                   className="mb-6 p-4 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
                 >
                   <div className="flex items-center">
-                    <motion.svg 
+                    <svg 
                       className="w-5 h-5 text-green-500 mr-3"
                       fill="currentColor" 
                       viewBox="0 0 20 20"
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 0.5 }}
                     >
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </motion.svg>
+                    </svg>
                     <div>
                       <span className="text-green-800 font-medium block">{success}</span>
                       <p className="text-green-700 text-sm mt-1">
@@ -289,17 +265,13 @@ const Contact = () => {
                       </p>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               )}
-            </AnimatePresence>
 
-            <form onSubmit={handleSubmit}>
+<form onSubmit={handleSubmit}>
               <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 }}
+                  <div
                   >
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                       Full Name *
@@ -313,11 +285,8 @@ const Contact = () => {
                       className="w-full px-5 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all duration-300 hover:border-red-300"
                       placeholder="Enter your name"
                     />
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
+                  </div>
+                  <div
                   >
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                       Email Address *
@@ -331,14 +300,11 @@ const Contact = () => {
                       className="w-full px-5 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all duration-300 hover:border-purple-300"
                       placeholder="Enter your email"
                     />
-                  </motion.div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 }}
+                  <div
                   >
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                       Phone Number *
@@ -352,11 +318,8 @@ const Contact = () => {
                       className="w-full px-5 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all duration-300 hover:border-red-300"
                       placeholder="10-digit number"
                     />
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 }}
+                  </div>
+                  <div
                   >
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                       Interested Course
@@ -373,13 +336,10 @@ const Contact = () => {
                         </option>
                       ))}
                     </select>
-                  </motion.div>
+                  </div>
                 </div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 }}
+                <div
                 >
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     Your Message *
@@ -396,28 +356,22 @@ const Contact = () => {
                   <p className="text-xs text-gray-500 mt-3">
                     Please provide as much detail as possible so we can assist you better.
                   </p>
-                </motion.div>
+                </div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7 }}
+                <div
                 >
                   <button
                     type="submit"
                     disabled={isSubmitting}
                     className="w-full py-5 px-6 bg-gradient-to-r from-red-600 to-purple-900 text-white font-bold rounded-xl hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group overflow-hidden relative"
                   >
-                    <motion.div
+                    <div
                       className="absolute inset-0 bg-gradient-to-r from-purple-900 to-red-600"
-                      initial={{ x: '-100%' }}
-                      whileHover={{ x: 0 }}
-                      transition={{ duration: 0.3 }}
                     />
                     <span className="relative z-10 flex items-center">
                       {isSubmitting ? (
                         <>
-                          <motion.svg 
+                          <svg 
                             className="animate-spin h-6 w-6 mr-3 text-white" 
                             xmlns="http://www.w3.org/2000/svg" 
                             fill="none" 
@@ -425,23 +379,21 @@ const Contact = () => {
                           >
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </motion.svg>
+                          </svg>
                           Sending Message...
                         </>
                       ) : (
                         <>
                           <span className="text-xl mr-3">📤</span>
                           Send Message
-                          <motion.svg 
+                          <svg 
                             className="w-5 h-5 ml-3"
                             fill="none" 
                             stroke="currentColor" 
                             viewBox="0 0 24 24"
-                            animate={{ x: [0, 5, 0] }}
-                            transition={{ repeat: Infinity, duration: 1 }}
                           >
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                          </motion.svg>
+                          </svg>
                         </>
                       )}
                     </span>
@@ -449,94 +401,59 @@ const Contact = () => {
                   <p className="text-xs text-gray-500 mt-4 text-center">
                     <span className="text-red-600">🔒</span> Your information is secure. We don't share your details with anyone.
                   </p>
-                </motion.div>
+                </div>
               </div>
             </form>
           </div>
-        </motion.div>
+        </div>
 
         {/* Hero Section */}
-        <motion.div 
+        <div 
           className="text-center mb-16"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
         >
-          <motion.div 
+          <div 
             className="inline-flex items-center justify-center p-4 bg-gradient-to-r from-red-100 to-purple-100 rounded-full mb-6 shadow-lg"
-            animate={{ 
-              scale: [1, 1.1, 1],
-              rotate: [0, 5, -5, 0]
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
           >
             <span className="text-4xl">📞</span>
-          </motion.div>
-          <motion.h1 
+          </div>
+          <h1 
             className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-red-600 via-purple-600 to-purple-900 bg-clip-text text-transparent"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1 }}
           >
             Get in Touch With Us
-          </motion.h1>
-          <motion.p 
+          </h1>
+          <p 
             className="text-xl text-gray-700 max-w-3xl mx-auto"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2 }}
           >
             Have questions? We're here to help. Our team will respond to your inquiry within 24 hours.
-          </motion.p>
-        </motion.div>
+          </p>
+        </div>
 
         {/* Contact Information Cards */}
-        <motion.div 
+        <div 
           className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.4 }}
         >
           {contactInfo.map((info, index) => (
-            <motion.div 
+            <div 
               key={index}
               className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300"
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.6 + index * 0.2 }}
-              whileHover={{ 
-                y: -10,
-                borderColor: index === 0 ? '#ef4444' : index === 1 ? '#7c3aed' : '#4c1d95'
-              }}
               style={{ borderWidth: '2px', borderColor: 'transparent' }}
             >
-              <motion.div 
+              <div 
                 className="text-5xl mb-6 text-center"
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  rotateY: [0, 360]
-                }}
-                transition={{ 
-                  scale: { duration: 2, repeat: Infinity },
-                  rotateY: { duration: 3, repeat: Infinity, delay: index * 0.5 }
-                }}
               >
                 {info.icon}
-              </motion.div>
+              </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
                 {info.title}
               </h3>
               <div className="space-y-3 mb-8">
                 {info.details.map((detail, idx) => (
-                  <motion.p 
+                  <p 
                     key={idx} 
                     className="text-gray-700 text-center"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 2 + idx * 0.1 }}
                   >
                     {detail}
-                  </motion.p>
+                  </p>
                 ))}
               </div>
               <div className="text-center">
@@ -547,44 +464,34 @@ const Contact = () => {
                   className="relative inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-600 to-purple-900 text-white font-medium rounded-lg hover:shadow-lg transition-all duration-300 overflow-hidden group"
                 >
                   <span className="relative z-10">{info.action.text}</span>
-                  <motion.div 
+                  <div 
                     className="absolute inset-0 bg-gradient-to-r from-purple-900 to-red-600"
-                    initial={{ x: '-100%' }}
-                    whileHover={{ x: 0 }}
-                    transition={{ duration: 0.3 }}
                   />
-                  <motion.svg 
+                  <svg 
                     className="w-4 h-4 ml-2 relative z-10"
                     fill="none" 
                     stroke="currentColor" 
                     viewBox="0 0 24 24"
-                    animate={{ x: [0, 3, 0] }}
-                    transition={{ repeat: Infinity, duration: 1.5, delay: index * 0.3 }}
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </motion.svg>
+                  </svg>
                 </a>
               </div>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Map Section */}
-          <motion.div 
+          <div 
             className="bg-white rounded-2xl shadow-xl p-8"
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 2.2 }}
           >
             <div className="flex items-center mb-8">
-              <motion.div 
+              <div 
                 className="p-3 bg-gradient-to-r from-red-100 to-purple-100 rounded-lg mr-4"
-                whileHover={{ rotate: 360 }}
-                transition={{ duration: 0.5 }}
               >
                 <span className="text-2xl">🗺️</span>
-              </motion.div>
+              </div>
               <h2 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-purple-900 bg-clip-text text-transparent">
                 Find Our Main Campus
               </h2>
@@ -592,35 +499,21 @@ const Contact = () => {
             <div className="relative bg-gradient-to-br from-red-50 to-purple-50 h-64 rounded-xl flex flex-col items-center justify-center mb-6 overflow-hidden">
               {/* Floating particles */}
               {[...Array(15)].map((_, i) => (
-                <motion.div
+                <div
                   key={i}
                   className="absolute w-1 h-1 bg-gradient-to-r from-red-300 to-purple-300 rounded-full"
                   style={{
                     left: `${Math.random() * 100}%`,
                     top: `${Math.random() * 100}%`,
                   }}
-                  animate={{
-                    y: [0, -20, 0],
-                    opacity: [0, 1, 0],
-                  }}
-                  transition={{
-                    duration: 2 + Math.random() * 2,
-                    repeat: Infinity,
-                    delay: i * 0.2,
-                  }}
                 />
               ))}
               
-              <motion.div 
+              <div 
                 className="text-5xl mb-4"
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  rotate: [0, 5, -5, 0]
-                }}
-                transition={{ duration: 3, repeat: Infinity }}
               >
                 📍
-              </motion.div>
+              </div>
               <p className="text-gray-800 font-bold text-lg">Sharma Institute</p>
               <p className="text-gray-600">Ramgarh, Jharkhand 829122</p>
             </div>
@@ -633,31 +526,23 @@ const Contact = () => {
               >
                 <span className="mr-3">🚗</span>
                 Get Directions on Google Maps
-                <motion.div 
+                <div 
                   className="absolute inset-0 bg-gradient-to-r from-gray-900 to-gray-800"
-                  initial={{ x: '-100%' }}
-                  whileHover={{ x: 0 }}
-                  transition={{ duration: 0.3 }}
                 />
               </a>
             </div>
-          </motion.div>
+          </div>
 
           {/* Business Hours */}
-          <motion.div 
+          <div 
             className="bg-white rounded-2xl shadow-xl p-8"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 2.4 }}
           >
             <div className="flex items-center mb-8">
-              <motion.div 
+              <div 
                 className="p-3 bg-gradient-to-r from-purple-100 to-red-100 rounded-lg mr-4"
-                animate={{ rotate: [0, 360] }}
-                transition={{ duration: 4, repeat: Infinity }}
               >
                 <span className="text-2xl">🕒</span>
-              </motion.div>
+              </div>
               <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-red-600 bg-clip-text text-transparent">
                 Business Hours
               </h2>
@@ -670,7 +555,7 @@ const Contact = () => {
                 { day: 'Admission Office', time: 'Open 24/7 Online', icon: '🌐', color: 'from-purple-50 to-red-50' },
                 { day: 'Emergency Support', time: '24/7 Available', icon: '🚨', color: 'from-red-100 to-purple-100' }
               ].map((hour, index) => (
-                <motion.div 
+                <div 
                   key={index}
                   className="flex items-center justify-between py-5 px-6 rounded-xl"
                   style={{ 
@@ -678,71 +563,51 @@ const Contact = () => {
                     '--tw-gradient-from': hour.color.split(' ')[1],
                     '--tw-gradient-to': hour.color.split(' ')[3],
                   }}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 2.6 + index * 0.1 }}
-                  whileHover={{ scale: 1.02 }}
                 >
                   <div className="flex items-center">
-                    <motion.span 
+                    <span 
                       className="text-2xl mr-4"
-                      animate={{ rotate: [0, 360] }}
-                      transition={{ duration: 3, repeat: Infinity, delay: index * 0.5 }}
                     >
                       {hour.icon}
-                    </motion.span>
+                    </span>
                     <span className="font-bold text-gray-900">{hour.day}</span>
                   </div>
-                  <motion.span 
+                  <span 
                     className="px-4 py-2 bg-gradient-to-r from-red-600 to-purple-900 text-white font-semibold rounded-lg shadow-md"
-                    whileHover={{ scale: 1.1 }}
                   >
                     {hour.time}
-                  </motion.span>
-                </motion.div>
+                  </span>
+                </div>
               ))}
             </div>
-            <motion.div 
+            <div 
               className="mt-8 p-5 bg-gradient-to-r from-yellow-50 to-yellow-100 border border-yellow-300 rounded-xl"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 3.2 }}
             >
               <p className="text-sm text-yellow-900 flex items-center">
-                <motion.span 
+                <span 
                   className="text-lg mr-2"
-                  animate={{ rotate: [0, 360] }}
-                  transition={{ duration: 3, repeat: Infinity }}
                 >
                   ⚠️
-                </motion.span>
+                </span>
                 <span>
                   <span className="font-bold">Note:</span> During holidays, timings may vary. 
                   Please check our notices section for updates.
                 </span>
               </p>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         </div>
 
         {/* Quick Response Info */}
-        <motion.div 
+        <div 
           className="mt-16 bg-gradient-to-r from-red-50 to-purple-50 border border-red-200 rounded-2xl p-8 shadow-lg"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 3 }}
         >
           <div className="flex items-center mb-6">
-            <motion.div 
+            <div 
               className="p-3 bg-gradient-to-r from-red-100 to-purple-100 rounded-lg mr-4"
-              animate={{ 
-                scale: [1, 1.2, 1],
-                rotate: [0, 10, -10, 0]
-              }}
-              transition={{ duration: 2, repeat: Infinity }}
             >
               <span className="text-red-600 text-xl">⚡</span>
-            </motion.div>
+            </div>
             <h3 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-purple-900 bg-clip-text text-transparent">
               Quick Response Guarantee
             </h3>
@@ -754,59 +619,45 @@ const Contact = () => {
               { text: 'Expert guidance', icon: '👨‍🏫' },
               { text: 'No spam, guaranteed', icon: '🛡️' }
             ].map((item, index) => (
-              <motion.div 
+              <div 
                 key={index}
                 className="flex items-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 3.2 + index * 0.1 }}
-                whileHover={{ y: -5 }}
               >
-                <motion.span 
+                <span 
                   className="text-2xl mr-4"
-                  animate={{ scale: [1, 1.3, 1] }}
-                  transition={{ duration: 2, repeat: Infinity, delay: index * 0.5 }}
                 >
                   {item.icon}
-                </motion.span>
+                </span>
                 <span className="font-medium text-gray-900">{item.text}</span>
-              </motion.div>
+              </div>
             ))}
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Floating Help Button */}
-      <motion.div
+      <div
         className="fixed bottom-8 right-8 z-50"
-        initial={{ opacity: 0, scale: 0, rotate: -180 }}
-        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-        transition={{ delay: 3.5, type: "spring" }}
       >
         <a
           href="tel:+918226871265"
           className="bg-gradient-to-r from-red-600 to-purple-900 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl flex items-center gap-2 group"
         >
           <span>📞 Call Now</span>
-          <motion.svg
+          <svg
             className="w-5 h-5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
-            whileHover={{ rotate: 90 }}
-            transition={{ duration: 0.3 }}
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-          </motion.svg>
+          </svg>
         </a>
-      </motion.div>
+      </div>
 
       {/* Floating WhatsApp Button */}
-      <motion.div
+      <div
         className="fixed bottom-8 left-8 z-50"
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 4, type: "spring" }}
       >
         <a
           href="https://wa.me/918226871265"
@@ -817,7 +668,7 @@ const Contact = () => {
           <span className="text-xl">💬</span>
           <span>WhatsApp</span>
         </a>
-      </motion.div>
+      </div>
     </div>
   )
 }

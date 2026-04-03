@@ -318,6 +318,7 @@ export const courseAPI = {
 // src/services/api.js में
 // classAPI object update करें:
 export const classAPI = {
+  
   createClass: (data) => {
     console.log('📤 Creating class:', data);
     return api.post('/classes', data);
