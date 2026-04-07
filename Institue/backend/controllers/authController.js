@@ -438,15 +438,29 @@ const getProfile = async (req, res) => {
 // @access  Private
 const updateProfile = async (req, res) => {
   try {
-    const { name, phone, parentPhone, address, class: studentClass } = req.body;
+    const { 
+      name, 
+      phone, 
+      parentPhone, 
+      address, 
+      class: studentClass,
+      emergencyContact,
+      bloodGroup,
+      fatherName,
+      motherName
+    } = req.body;
     
     // Fields that can be updated
     const updateFields = {};
-    if (name) updateFields.name = name;
-    if (phone) updateFields.phone = phone;
-    if (parentPhone) updateFields.parentPhone = parentPhone;
-    if (address) updateFields.address = address;
-    if (studentClass) updateFields.class = studentClass;
+    if (name !== undefined) updateFields.name = name;
+    if (phone !== undefined) updateFields.phone = phone;
+    if (parentPhone !== undefined) updateFields.parentPhone = parentPhone;
+    if (address !== undefined) updateFields.address = address;
+    if (studentClass !== undefined) updateFields.class = studentClass;
+    if (emergencyContact !== undefined) updateFields.emergencyContact = emergencyContact;
+    if (bloodGroup !== undefined) updateFields.bloodGroup = bloodGroup;
+    if (fatherName !== undefined) updateFields.fatherName = fatherName;
+    if (motherName !== undefined) updateFields.motherName = motherName;
 
     // Find and update user
     const user = await User.findByIdAndUpdate(
@@ -486,6 +500,57 @@ const updateProfile = async (req, res) => {
   }
 };
 
+// @desc    Upload profile image
+// @route   POST /api/auth/upload-profile-image
+// @access  Private
+const uploadProfileImage = async (req, res) => {
+  try {
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No image file provided'
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Update user's profile image path
+    user.profileImage = `/uploads/profiles/${req.file.filename}`;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile image uploaded successfully',
+      data: {
+        profileImage: user.profileImage
+      }
+    });
+  } catch (error) {
+    console.error('Upload profile image error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// @desc    Change password (alias for updatePassword)
+// @route   PUT /api/auth/change-password
+// @access  Private
+const changePassword = async (req, res, next) => {
+  // Simply call updatePassword with the same logic
+  return updatePassword(req, res, next);
+};
+
 
 module.exports = {
   register,
@@ -494,9 +559,11 @@ module.exports = {
   getMe,
   updateDetails,
   updatePassword,
+  changePassword,
   forgotPassword,
   resetPassword,
   verifyEmail,
   getProfile,      // Add this
-  updateProfile 
+  updateProfile,
+  uploadProfileImage
 };

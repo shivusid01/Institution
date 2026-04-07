@@ -2,6 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
+const multer = require('multer');
+const path = require('path');
 const {
   register,
   login,
@@ -11,11 +13,38 @@ const {
   updateProfile,
   updateDetails,
   updatePassword,
+  changePassword,
+  uploadProfileImage,
   forgotPassword,
   resetPassword,
   verifyEmail
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
+
+// Multer configuration for profile image uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/profiles/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'profile-' + req.user.id + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: function (req, file, cb) {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
+  }
+});
 
 // Validation middleware
 const registerValidation = [
@@ -155,10 +184,13 @@ router.get('/logout', protect, logout);
 router.get('/me', protect, getMe);
 router.put('/updatedetails', protect, updateDetailsValidation, updateDetails);
 router.put('/updatepassword', protect, updatePasswordValidation, updatePassword);
+router.put('/change-password', protect, updatePasswordValidation, changePassword);
 
 // Admin only routes (optional - if you want to add admin auth features)
 // router.post('/create-admin', protect, authorize('admin'), createAdmin);
 // Profile routes
 router.get('/profile', protect, getProfile);
 router.put('/profile', protect, updateProfile);
+router.post('/upload-profile-image', protect, upload.single('profileImage'), uploadProfileImage);
+
 module.exports = router;

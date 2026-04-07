@@ -21,6 +21,28 @@ const StudentProfile = () => {
   })
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
+  
+  // Password change state
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [changingPassword, setChangingPassword] = useState(false)
+
+  // Contact admin state
+  const [showContactModal, setShowContactModal] = useState(false)
+  const [contactData, setContactData] = useState({
+    subject: '',
+    message: ''
+  })
+  const [sendingContact, setSendingContact] = useState(false)
+
+  // Image upload state
+  const [selectedImage, setSelectedImage] = useState(null)
+  const [imagePreview, setImagePreview] = useState(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   // Fetch profile data
   useEffect(() => {
@@ -36,23 +58,25 @@ const StudentProfile = () => {
         const profileData = response.data.data
         setProfile(profileData)
         
-        // Set form data
+        // Set form data - ensure all fields are properly mapped
         setFormData({
           name: profileData.name || '',
           email: profileData.email || '',
           phone: profileData.phone || '',
           parentPhone: profileData.parentPhone || '',
-          class: profileData.class || '',
+          class: profileData.class || profileData.className || '', // Handle both possible field names
           address: profileData.address || '',
           fatherName: profileData.fatherName || '',
           motherName: profileData.motherName || '',
           emergencyContact: profileData.emergencyContact || '',
           bloodGroup: profileData.bloodGroup || ''
         })
+      } else {
+        setMessage({ type: 'error', text: 'Failed to load profile data' })
       }
     } catch (error) {
-      console.error('Error fetching profile:', error)
-      setMessage({ type: 'error', text: 'Failed to load profile' })
+      console.error('Fetch profile error:', error)
+      setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to load profile' })
     } finally {
       setLoading(false)
     }
@@ -69,17 +93,49 @@ const StudentProfile = () => {
   const handleSaveProfile = async (e) => {
     e.preventDefault()
     
+    // Validate required fields
+    if (!formData.name || !formData.phone) {
+      setMessage({ type: 'error', text: 'Name and Phone number are required fields' })
+      return
+    }
+    
     try {
       setSaving(true)
       setMessage({ type: '', text: '' })
       
-      const response = await authAPI.updateProfile(formData)
+      // Prepare data for update - only send fields that are supported by the backend
+      const updateData = {
+        name: formData.name,
+        phone: formData.phone,
+        parentPhone: formData.parentPhone,
+        class: formData.class,
+        address: formData.address,
+        fatherName: formData.fatherName,
+        motherName: formData.motherName,
+        emergencyContact: formData.emergencyContact,
+        bloodGroup: formData.bloodGroup
+      }
+      
+      // Remove empty fields to avoid overwriting with empty values
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === '') {
+          delete updateData[key]
+        }
+      })
+      
+      console.log('Sending update data:', updateData) // Debug log
+      
+      const response = await authAPI.updateProfile(updateData)
+      
+      console.log('Update response:', response) // Debug log
       
       if (response.data.success) {
         // Update local state
         setProfile(response.data.data)
         // Update auth context
-        updateUser(response.data.data)
+        if (updateUser) {
+          updateUser(response.data.data)
+        }
         // Exit edit mode
         setEditing(false)
         
@@ -88,33 +144,194 @@ const StudentProfile = () => {
           text: 'Profile updated successfully!' 
         })
         
+        // Refresh profile data to ensure consistency
+        await fetchProfile()
+        
         // Clear message after 3 seconds
         setTimeout(() => {
           setMessage({ type: '', text: '' })
         }, 3000)
+      } else {
+        setMessage({ type: 'error', text: response.data.message || 'Failed to update profile' })
       }
     } catch (error) {
-      console.error('Error updating profile:', error)
+      console.error('Update profile error:', error)
       setMessage({ 
         type: 'error', 
-        text: error.response?.data?.message || 'Failed to update profile' 
+        text: error.response?.data?.message || error.response?.data?.error || 'Failed to update profile' 
       })
     } finally {
       setSaving(false)
     }
   }
 
-  const handleChangePassword = () => {
-    // Implement password change functionality
-    alert('Password change functionality will be implemented soon')
+  const handlePasswordChange = async (e) => {
+    e.preventDefault()
+    
+    // Validate passwords
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      setMessage({ type: 'error', text: 'All password fields are required' })
+      return
+    }
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setMessage({ type: 'error', text: 'New password and confirm password do not match' })
+      return
+    }
+    
+    if (passwordData.newPassword.length < 6) {
+      setMessage({ type: 'error', text: 'New password must be at least 6 characters long' })
+      return
+    }
+    
+    try {
+      setChangingPassword(true)
+      setMessage({ type: '', text: '' })
+      
+      // Use the correct API endpoint for password change
+      const response = await authAPI.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      })
+      
+      console.log('Password change response:', response) // Debug log
+      
+      if (response.data.success) {
+        setMessage({ type: 'success', text: 'Password changed successfully!' })
+        setShowPasswordModal(false)
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        })
+        
+        // Clear message after 3 seconds
+        setTimeout(() => {
+          setMessage({ type: '', text: '' })
+        }, 3000)
+      } else {
+        setMessage({ type: 'error', text: response.data.message || 'Failed to change password' })
+      }
+    } catch (error) {
+      console.error('Password change error:', error)
+      setMessage({ 
+        type: 'error', 
+        text: error.response?.data?.message || error.response?.data?.error || 'Failed to change password' 
+      })
+    } finally {
+      setChangingPassword(false)
+    }
   }
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0
-    }).format(amount || 0)
+  const handleContactAdmin = async (e) => {
+    e.preventDefault()
+    
+    if (!contactData.subject || !contactData.message) {
+      setMessage({ type: 'error', text: 'Please provide both subject and message' })
+      return
+    }
+    
+    try {
+      setSendingContact(true)
+      setMessage({ type: '', text: '' })
+      
+      const response = await userAPI.contactAdmin({
+        subject: contactData.subject,
+        message: contactData.message,
+        userId: profile?._id,
+        userEmail: profile?.email,
+        userName: profile?.name
+      })
+      
+      if (response.data.success) {
+        setMessage({ type: 'success', text: 'Message sent to admin successfully!' })
+        setShowContactModal(false)
+        setContactData({ subject: '', message: '' })
+        
+        // Clear message after 3 seconds
+        setTimeout(() => {
+          setMessage({ type: '', text: '' })
+        }, 3000)
+      } else {
+        setMessage({ type: 'error', text: response.data.message || 'Failed to send message' })
+      }
+    } catch (error) {
+      console.error('Contact admin error:', error)
+      setMessage({ 
+        type: 'error', 
+        text: error.response?.data?.message || 'Failed to send message to admin' 
+      })
+    } finally {
+      setSendingContact(false)
+    }
+  }
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setMessage({ type: 'error', text: 'Please select a valid image file' })
+        return
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setMessage({ type: 'error', text: 'Image size should be less than 5MB' })
+        return
+      }
+      
+      setSelectedImage(file)
+      const reader = new FileReader()
+      reader.onload = (e) => setImagePreview(e.target.result)
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleImageUpload = async () => {
+    if (!selectedImage) return
+    
+    try {
+      setUploadingImage(true)
+      setMessage({ type: '', text: '' })
+      
+      const formData = new FormData()
+      formData.append('profileImage', selectedImage)
+      
+      const response = await authAPI.uploadProfileImage(formData)
+      
+      if (response.data.success) {
+        // Update profile with new image URL
+        setProfile(prev => ({
+          ...prev,
+          profileImage: response.data.data.profileImage
+        }))
+        
+        // Clear image states
+        setSelectedImage(null)
+        setImagePreview(null)
+        
+        setMessage({ type: 'success', text: 'Profile image updated successfully!' })
+        
+        // Refresh profile data
+        await fetchProfile()
+        
+        // Clear message after 3 seconds
+        setTimeout(() => {
+          setMessage({ type: '', text: '' })
+        }, 3000)
+      } else {
+        setMessage({ type: 'error', text: response.data.message || 'Failed to upload image' })
+      }
+    } catch (error) {
+      console.error('Image upload error:', error)
+      setMessage({ 
+        type: 'error', 
+        text: error.response?.data?.message || 'Failed to upload image' 
+      })
+    } finally {
+      setUploadingImage(false)
+    }
   }
 
   const formatDate = (dateString) => {
@@ -125,6 +342,14 @@ const StudentProfile = () => {
       month: 'short',
       year: 'numeric'
     })
+  }
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0
+    }).format(amount || 0)
   }
 
   if (loading) {
@@ -179,6 +404,83 @@ const StudentProfile = () => {
             {editing ? (
               // Edit Form
               <form onSubmit={handleSaveProfile} className="p-6">
+                {/* Profile Image Upload in Edit Mode */}
+                <div className="mb-8 flex items-center space-x-6">
+                  <div className="relative">
+                    <div className="h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+                      {imagePreview ? (
+                        <img 
+                          src={imagePreview} 
+                          alt="Preview" 
+                          className="h-full w-full object-cover"
+                        />
+                      ) : profile?.profileImage ? (
+                        <img 
+                          src={profile.profileImage} 
+                          alt="Profile" 
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-4xl text-blue-600 font-bold">
+                          {profile?.name?.charAt(0) || 'S'}
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Image Upload Button */}
+                    <label className="absolute -bottom-2 -right-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 cursor-pointer shadow-lg transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900">Update Profile Picture</h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Click the camera icon to upload a new profile picture. Max size: 5MB
+                    </p>
+                    
+                    {/* Image Preview and Upload Actions */}
+                    {imagePreview && (
+                      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-1">
+                            <p className="text-sm text-blue-800 font-medium">New profile image selected</p>
+                            <p className="text-xs text-blue-600">Click "Upload Image" to save or "Cancel" to discard</p>
+                          </div>
+                          <div className="flex space-x-2">
+                            <button
+                              type="button"
+                              onClick={handleImageUpload}
+                              disabled={uploadingImage}
+                              className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
+                            >
+                              {uploadingImage ? 'Uploading...' : 'Upload Image'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedImage(null)
+                                setImagePreview(null)
+                              }}
+                              className="px-3 py-1 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Name */}
                   <div>
@@ -336,7 +638,13 @@ const StudentProfile = () => {
                 <div className="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200">
                   <button
                     type="button"
-                    onClick={() => setEditing(false)}
+                    onClick={() => {
+                      setEditing(false)
+                      fetchProfile() // Reset form data
+                      // Clear image states
+                      setSelectedImage(null)
+                      setImagePreview(null)
+                    }}
                     className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                   >
                     Cancel
@@ -361,17 +669,77 @@ const StudentProfile = () => {
               // View Mode
               <div className="p-6">
                 <div className="flex items-center mb-8">
-                  <div className="h-20 w-20 rounded-full bg-blue-100 flex items-center justify-center mr-6">
-                    <span className="text-3xl text-blue-600 font-bold">
-                      {profile?.name?.charAt(0) || 'S'}
-                    </span>
+                  {/* Profile Image Section */}
+                  <div className="relative mr-6">
+                    <div className="h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+                      {profile?.profileImage ? (
+                        <img 
+                          src={profile.profileImage} 
+                          alt="Profile" 
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-4xl text-blue-600 font-bold">
+                          {profile?.name?.charAt(0) || 'S'}
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Image Upload Button */}
+                    <label className="absolute -bottom-2 -right-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 cursor-pointer shadow-lg transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="hidden"
+                      />
+                    </label>
                   </div>
-                  <div>
+                  
+                  <div className="flex-1">
                     <h3 className="text-2xl font-bold text-gray-900">{profile?.name}</h3>
                     <p className="text-gray-600">{profile?.email}</p>
                     <p className="text-sm text-gray-500 font-mono">
                       Enrollment ID: {profile?.enrollmentId || 'N/A'}
                     </p>
+                    
+                    {/* Image Preview and Upload */}
+                    {imagePreview && (
+                      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center space-x-4">
+                          <img 
+                            src={imagePreview} 
+                            alt="Preview" 
+                            className="h-16 w-16 rounded-full object-cover border-2 border-blue-300"
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm text-blue-800 font-medium">New profile image selected</p>
+                            <p className="text-xs text-blue-600">Click upload to save changes</p>
+                          </div>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={handleImageUpload}
+                              disabled={uploadingImage}
+                              className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
+                            >
+                              {uploadingImage ? 'Uploading...' : 'Upload'}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedImage(null)
+                                setImagePreview(null)
+                              }}
+                              className="px-3 py-1 border border-gray-300 text-gray-700 text-sm rounded hover:bg-gray-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -528,7 +896,7 @@ const StudentProfile = () => {
             
             <div className="space-y-3">
               <button
-                onClick={handleChangePassword}
+                onClick={() => setShowPasswordModal(true)}
                 className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 flex items-center"
               >
                 <span className="mr-3">🔒</span>
@@ -560,7 +928,7 @@ const StudentProfile = () => {
               If any information is incorrect or needs updating, contact your admin.
             </p>
             <button
-              onClick={() => alert('Contact admin functionality')}
+              onClick={() => setShowContactModal(true)}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg"
             >
               Contact Admin
@@ -568,6 +936,135 @@ const StudentProfile = () => {
           </div>
         </div>
       </div>
+
+      {/* Password Change Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold mb-4">Change Password</h2>
+            <form onSubmit={handlePasswordChange}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Current Password *
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                    required
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    New Password *
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                    required
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Confirm New Password *
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                    required
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordModal(false)
+                    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={changingPassword}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {changingPassword ? 'Changing...' : 'Change Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Contact Admin Modal */}
+      {showContactModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold mb-4">Contact Admin</h2>
+            <form onSubmit={handleContactAdmin}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Subject *
+                  </label>
+                  <input
+                    type="text"
+                    value={contactData.subject}
+                    onChange={(e) => setContactData({...contactData, subject: e.target.value})}
+                    required
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Message *
+                  </label>
+                  <textarea
+                    value={contactData.message}
+                    onChange={(e) => setContactData({...contactData, message: e.target.value})}
+                    required
+                    rows="5"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowContactModal(false)
+                    setContactData({ subject: '', message: '' })
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendingContact}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {sendingContact ? 'Sending...' : 'Send Message'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
