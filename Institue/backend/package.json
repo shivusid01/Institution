@@ -1,7 +1,7 @@
 {
-  "name": "coaching-institute-backend",
+  "name": "institute-backend",
   "version": "1.0.0",
-  "description": "Backend for Coaching Institute Website",
+  "description": "Backend for Institute Website",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
