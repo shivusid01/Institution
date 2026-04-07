@@ -6,6 +6,8 @@ import HeroSection from '../components/home/HeroSection'
 import Features from '../components/home/Features'
 import Stats from '../components/home/Stats'
 import Testimonials from '../components/home/Testimonials'
+import ImageSlider from '../components/home/ImageSlider'
+import MovingTextStrip from '../components/home/MovingTextStrip'
 
 const Home = () => {
   const [isLoading, setIsLoading] = useState(true)
@@ -49,7 +51,9 @@ const Home = () => {
 
   return (
     <div className="fade-in">
+      <MovingTextStrip />
       <HeroSection />
+      <ImageSlider />
       <Features />
       <Stats />
       <Testimonials />
