@@ -193,19 +193,11 @@ export const paymentAPI = {
 
   // Get all payments for admin
   getAllPayments: (params) => {
-    console.log('📡 [API] Fetching all payments with params:', params);
     return api.get('/payments', { params })
       .then(response => {
-        console.log('✅ [API] Payments response:', {
-          success: response.data.success,
-          count: response.data.count,
-          total: response.data.total,
-          paymentsLength: response.data.payments?.length
-        });
         return response;
       })
       .catch(error => {
-        console.error('❌ [API] Payments error:', error.response?.data || error.message);
         throw error;
       });
   },
@@ -244,6 +236,10 @@ export const authAPI = {
   // NEW PROFILE FUNCTIONS
   getProfile: () => api.get('/auth/profile'),
   updateProfile: (data) => api.put('/auth/profile', data),
+  changePassword: (passwordData) => api.put('/auth/change-password', passwordData),
+  uploadProfileImage: (formData) => api.post('/auth/upload-profile-image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
 };
 
 // ================= USER APIs =================
@@ -255,14 +251,11 @@ export const userAPI = {
   
   // ✅ Student Registration by Admin
   registerStudent: (data) => {
-    console.log('📤 API: Registering student with data:', data)
     return api.post('/users/register-student', data)
       .then(response => {
-        console.log('✅ API: Registration successful:', response.data)
         return response
       })
       .catch(error => {
-        console.error('❌ API: Registration failed:', error.response?.data || error.message)
         throw error
       })
   },
@@ -284,30 +277,27 @@ export const userAPI = {
   
   // Search with advanced filters
   searchStudents: (params) => api.get('/users/students/search', { params }),
+  
+  // Contact admin functionality
+  contactAdmin: (contactData) => api.post('/contact/admin', contactData),
 };
 export const courseAPI = {
   getAllCourses: () => {
-    console.log('📡 Fetching courses...');
     return api.get('/courses')
       .then(response => {
-        console.log('✅ Courses fetched:', response.data.courses?.length || 0);
         return response;
       })
       .catch(error => {
-        console.error('❌ Error fetching courses:', error);
         throw error;
       });
   },
   getCourse: (id) => api.get(`/courses/${id}`), // ✅ FIXED: Added getCourse function
    createCourse: (data) => {
-    console.log('📤 Creating course with data:', data);
     return api.post('/courses', data)
       .then(response => {
-        console.log('✅ Course created:', response.data);
         return response;
       })
       .catch(error => {
-        console.error('❌ Error creating course:', error);
         throw error;
       });
   },
@@ -320,33 +310,27 @@ export const courseAPI = {
 export const classAPI = {
   
   createClass: (data) => {
-    console.log('📤 Creating class:', data);
     return api.post('/classes', data);
   },
   
   getClasses: (params) => {
-    console.log('📡 Fetching classes with params:', params);
     return api.get('/classes', { params });
   },
   
   getUpcomingClasses: () => {
-    console.log('📡 Fetching upcoming classes');
     return api.get('/classes/upcoming');
   },
   
   getLiveClasses: () => {
-    console.log('📡 Fetching live classes');
     return api.get('/classes/live');
   },
   
   joinClass: (classId) => {
-    console.log('🎯 Joining class:', classId);
     return api.post(`/classes/${classId}/join`);
   },
   deleteClass: (classId) => api.delete(`/classes/${classId}`),
 
   getClass: (id) => {
-    console.log('📡 Fetching class:', id);
     return api.get(`/classes/${id}`);
   }
   
@@ -356,7 +340,6 @@ export const noticeAPI = {
   // Admin notices
   createNotice: (data) => api.post('/notices', data),
   getAllNotices: (params) => {
-    console.log('📡 Fetching notices with params:', params);
     return api.get('/notices', { params });
   },
   updateNotice: (id, data) => api.put(`/notices/${id}`, data),
@@ -365,7 +348,6 @@ export const noticeAPI = {
   
   // Student notices
   getStudentNotices: (params) => {
-    console.log('📡 Fetching student notices with params:', params);
     return api.get('/notices/student', { params });
   },
   markNoticeAsRead: (noticeId) => api.post(`/notices/${noticeId}/read`),
