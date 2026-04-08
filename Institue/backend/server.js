@@ -15,6 +15,7 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const classRoutes = require('./routes/classRoutes');
 const noticeRoutes = require('./routes/noticeRoutes');
 const contactRoutes = require('./routes/contactRoutes');
+const documentRoutes = require('./routes/documentRoutes');
 
 // Import DB connection
 const connectDB = require('./config/database');
@@ -178,6 +179,7 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/notices', noticeRoutes);
+app.use('/api/documents', documentRoutes);
 app.use('/api/contact', contactRoutes);
 
 /* ===================== WEBHOOK ROUTES ===================== */
