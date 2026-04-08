@@ -15,6 +15,7 @@ import Courses from './pages/Courses'
 import Contact from './pages/Contact'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import Documents from './pages/Documents'
 // import ClassDetails from './pages/student/ClassDetails'
 import StudentDashboard from './pages/student/Dashboard'
 import StudentClasses from './pages/student/Classes'
@@ -66,6 +67,11 @@ function App() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              
+              {/* Protected Documents Route - For authenticated users */}
+              <Route element={<ProtectedRoute allowedRoles={['student', 'admin', 'teacher']} />}>
+                <Route path="/documents" element={<Documents />} />
+              </Route>
               
               {/* Protected Student Routes */}
               <Route element={<ProtectedRoute allowedRoles={['student']} />}>

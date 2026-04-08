@@ -133,6 +133,15 @@ const Navbar = () => {
             {isAuthenticated && user && (
               <div
               >
+                {/* Documents Link - For both students and admins/teachers */}
+                <Link 
+                  to="/documents" 
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-300"
+                >
+                  <span className="text-lg">📚</span>
+                  <span>Materials</span>
+                </Link>
+                
                 {user.role === 'student' && (
                   <Link 
                     to="/student/dashboard" 

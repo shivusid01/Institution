@@ -357,8 +357,32 @@ export const noticeAPI = {
   getNoticeById: (id) => api.get(`/notices/${id}`)
 };
 
+// ================= DOCUMENT APIs (PDF UPLOAD/DOWNLOAD) =================
+export const documentAPI = {
+  // Upload document (Admin/Teacher)
+  uploadDocument: (formData) => api.post('/documents/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+
+  // Get all documents
+  getAllDocuments: (params) => api.get('/documents', { params }),
+
+  // Get documents by class
+  getDocumentsByClass: (classId, params) => api.get(`/documents/class/${classId}`, { params }),
+
+  // Get single document
+  getDocumentById: (documentId) => api.get(`/documents/${documentId}`),
+
+  // Download document
+  downloadDocument: (documentId) => api.get(`/documents/download/${documentId}`, {
+    responseType: 'blob'
+  }),
+
+  // Update document
+  updateDocument: (documentId, data) => api.put(`/documents/${documentId}`, data),
+
+  // Delete document
+  deleteDocument: (documentId) => api.delete(`/documents/${documentId}`)
+};
+
 export default api;
-
-
-
-
