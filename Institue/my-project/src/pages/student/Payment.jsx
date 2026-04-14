@@ -37,9 +37,8 @@ const StudentPayment = () => {
     { id: "class12_science", name: "Class 12 (Science)", fee: 1500 },
     { id: "class11_commerce", name: "Class 11 (Commerce)", fee: 1200 },
     { id: "class12_commerce", name: "Class 12 (Commerce)", fee: 1200 },
-    { id: "jee_prep", name: "JEE Preparation", fee: 2000 },
-    { id: "neet_prep", name: "NEET Preparation", fee: 2000 },
-    { id: "upsc_foundation", name: "UPSC Foundation", fee: 1800 },
+    { id: "competition", name: "Competition", fee: 1000 },
+    
   ];
 
   const months = [

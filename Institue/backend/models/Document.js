@@ -11,8 +11,7 @@ const documentSchema = new mongoose.Schema({
     default: ''
   },
   classId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Class',
+    type: String, // Changed from ObjectId to String to support both MongoDB IDs and simple class IDs
     required: [true, 'Class is required']
   },
   className: {

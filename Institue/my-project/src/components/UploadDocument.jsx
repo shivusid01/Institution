@@ -1,54 +1,35 @@
-import React, { useState, useEffect } from 'react'
-import { classAPI } from '../services/api'
+import React, { useState } from 'react'
 import { documentAPI } from '../services/api'
 
 const UploadDocument = ({ onSuccess }) => {
+  // All classes available for document upload (same as Payment form)
+  const allClasses = [
+    { id: "class1", name: "Class 1", fee: 400 },
+    { id: "class2", name: "Class 2", fee: 400 },
+    { id: "class3", name: "Class 3", fee: 400 },
+    { id: "class4", name: "Class 4", fee: 600 },
+    { id: "class5", name: "Class 5", fee: 600 },
+    { id: "class6", name: "Class 6", fee: 600 },
+    { id: "class7", name: "Class 7", fee: 800 },
+    { id: "class8", name: "Class 8", fee: 800 },
+    { id: "class9", name: "Class 9", fee: 1000 },
+    { id: "class10", name: "Class 10", fee: 1000 },
+    { id: "class11_science", name: "Class 11 (Science)", fee: 1500 },
+    { id: "class12_science", name: "Class 12 (Science)", fee: 1500 },
+    { id: "class11_commerce", name: "Class 11 (Commerce)", fee: 1200 },
+    { id: "class12_commerce", name: "Class 12 (Commerce)", fee: 1200 },
+    { id: "competition", name: "Competition", fee: 1000 },
+  ]
+
   const [formData, setFormData] = useState({
     classId: '',
     topic: '',
     description: '',
     file: null
   })
-  const [classes, setClasses] = useState([])
   const [loading, setLoading] = useState(false)
-  const [classLoading, setClassLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [classError, setClassError] = useState('')
-
-  useEffect(() => {
-    fetchClasses()
-  }, [])
-
-  const fetchClasses = async () => {
-    try {
-      setClassLoading(true)
-      setClassError('')
-      const response = await classAPI.getClasses()
-      console.log('Classes response:', response)
-      
-      // Handle different response structures
-      let classesData = []
-      if (response.data.data && Array.isArray(response.data.data)) {
-        classesData = response.data.data
-      } else if (response.data && Array.isArray(response.data)) {
-        classesData = response.data
-      } else if (response.data.classes && Array.isArray(response.data.classes)) {
-        classesData = response.data.classes
-      }
-      
-      if (classesData.length === 0) {
-        setClassError('No classes available. Please create a class first.')
-      }
-      setClasses(classesData)
-    } catch (err) {
-      console.error('Error fetching classes:', err)
-      setClassError(`Error loading classes: ${err.response?.data?.message || err.message}`)
-      setClasses([])
-    } finally {
-      setClassLoading(false)
-    }
-  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -103,8 +84,13 @@ const UploadDocument = ({ onSuccess }) => {
     setSuccess('')
 
     try {
+      // Get the class name from selected ID
+      const selectedClass = allClasses.find(cls => cls.id === formData.classId)
+      const className = selectedClass ? selectedClass.name : formData.classId
+
       const uploadFormData = new FormData()
       uploadFormData.append('classId', formData.classId)
+      uploadFormData.append('className', className)
       uploadFormData.append('topic', formData.topic)
       uploadFormData.append('description', formData.description)
       uploadFormData.append('file', formData.file)
@@ -112,7 +98,7 @@ const UploadDocument = ({ onSuccess }) => {
       const response = await documentAPI.uploadDocument(uploadFormData)
 
       if (response.data.success) {
-        setSuccess('Document uploaded successfully!')
+        setSuccess('✅ Document uploaded successfully!')
         setFormData({
           classId: '',
           topic: '',
@@ -130,6 +116,7 @@ const UploadDocument = ({ onSuccess }) => {
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Error uploading document'
       setError(errorMsg)
+      console.error('Upload error:', err)
     } finally {
       setLoading(false)
     }
@@ -160,43 +147,60 @@ const UploadDocument = ({ onSuccess }) => {
         </div>
       )}
 
-      {classError && (
-        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 flex items-center">
-            <span className="text-xl mr-2">⚠️</span>
-            {classError}
-          </p>
-        </div>
-      )}
-
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Class Selection */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             Select Class <span className="text-red-500">*</span>
           </label>
-          {classLoading ? (
-            <div className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 flex items-center">
-              <span className="animate-spin mr-2">⏳</span>
-              <span className="text-gray-600">Loading classes...</span>
-            </div>
-          ) : (
-            <select
-              name="classId"
-              value={formData.classId}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              required
-              disabled={classes.length === 0}
-            >
-              <option value="">-- Select a Class --</option>
-              {classes.map(cls => (
-                <option key={cls._id} value={cls._id}>
-                  {cls.title} - {cls.subject || 'N/A'}
-                </option>
-              ))}
-            </select>
-          )}
+          <select
+            name="classId"
+            value={formData.classId}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all font-medium"
+            required
+          >
+            <option value="">-- Select a Class --</option>
+            
+            {/* Primary Classes (1-5) */}
+            <optgroup label="Primary School (Classes 1-5)">
+              <option value="class1">Class 1</option>
+              <option value="class2">Class 2</option>
+              <option value="class3">Class 3</option>
+              <option value="class4">Class 4</option>
+              <option value="class5">Class 5</option>
+            </optgroup>
+            
+            {/* Middle School (6-8) */}
+            <optgroup label="Middle School (Classes 6-8)">
+              <option value="class6">Class 6</option>
+              <option value="class7">Class 7</option>
+              <option value="class8">Class 8</option>
+            </optgroup>
+            
+            {/* High School (9-10) */}
+            <optgroup label="High School (Classes 9-10)">
+              <option value="class9">Class 9</option>
+              <option value="class10">Class 10</option>
+            </optgroup>
+            
+            {/* Senior Secondary - Science */}
+            <optgroup label="Senior Secondary (Science)">
+              <option value="class11_science">Class 11 (Science)</option>
+              <option value="class12_science">Class 12 (Science)</option>
+            </optgroup>
+            
+            {/* Senior Secondary - Commerce */}
+            <optgroup label="Senior Secondary (Commerce)">
+              <option value="class11_commerce">Class 11 (Commerce)</option>
+              <option value="class12_commerce">Class 12 (Commerce)</option>
+            </optgroup>
+            
+            {/* Competitive Exams */}
+            <optgroup label="Competitive Exams">
+              <option value="competition">Competition</option>
+            </optgroup>
+          </select>
         </div>
 
         {/* Topic Input */}

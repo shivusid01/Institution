@@ -17,7 +17,7 @@ ensureDirectoryExists(path.join(__dirname, '../uploads/documents'));
 // @access  Private (Admin/Teacher)
 exports.uploadDocument = async (req, res) => {
   try {
-    const { classId, topic, description } = req.body;
+    const { classId, topic, description, className } = req.body;
 
     // Validate required fields
     if (!req.file) {
@@ -34,25 +34,35 @@ exports.uploadDocument = async (req, res) => {
       });
     }
 
-    // Check if class exists
-    const classData = await Class.findById(classId);
-    if (!classData) {
-      // Delete uploaded file if class doesn't exist
-      if (req.file && req.file.path) {
-        fs.unlinkSync(req.file.path);
+    // For classId validation - it might be a simple string ID or MongoDB ObjectId
+    let classData = null;
+    let finalClassName = className || classId;
+
+    // Try to find class in database if classId looks like a MongoDB ObjectId
+    if (classId.match(/^[0-9a-fA-F]{24}$/)) {
+      classData = await Class.findById(classId);
+      if (!classData) {
+        // Delete uploaded file if class doesn't exist
+        if (req.file && req.file.path) {
+          fs.unlinkSync(req.file.path);
+        }
+        return res.status(404).json({
+          success: false,
+          message: 'Class not found'
+        });
       }
-      return res.status(404).json({
-        success: false,
-        message: 'Class not found'
-      });
+      finalClassName = classData.title;
+    } else {
+      // For string IDs like "class1", "class12_science", etc., we'll use the className from request
+      finalClassName = className || classId;
     }
 
     // Create document record
     const document = new Document({
       title: req.file.originalname.replace(/\.[^/.]+$/, ''), // Remove file extension for title
       description: description || '',
-      classId: classId,
-      className: classData.title,
+      classId: classId, // Store the ID as-is (might be MongoDB ObjectId or string ID)
+      className: finalClassName,
       topic: topic,
       fileUrl: `/uploads/documents/${req.file.filename}`,
       fileName: req.file.filename,

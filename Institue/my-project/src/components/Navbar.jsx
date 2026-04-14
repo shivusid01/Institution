@@ -36,12 +36,12 @@ const Navbar = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
   }
 
-  // Navigation items with icons
+  // Navigation items
   const navItems = [
-    { path: '/', label: 'Home', icon: '🏠' },
-    { path: '/about', label: 'About', icon: 'ℹ️' },
-    { path: '/courses', label: 'Courses', icon: '📚' },
-    { path: '/contact', label: 'Contact', icon: '📞' },
+    { path: '/', label: 'Home' },
+    { path: '/about', label: 'About' },
+    { path: '/courses', label: 'Courses' },
+    { path: '/contact', label: 'Contact' },
   ]
 
   // Loading state with animation
@@ -97,8 +97,8 @@ const Navbar = () => {
             </div>
           </Link>
 
-          {/* Desktop Navigation Links with Icons */}
-          <div className="hidden md:flex space-x-6">
+          {/* Desktop Navigation Links */}
+          <div className="hidden md:flex flex-nowrap space-x-6">
             {navItems.map((item, index) => {
               const isActive = location.pathname === item.path
               return (
@@ -107,17 +107,12 @@ const Navbar = () => {
                 >
                   <Link 
                     to={item.path}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
                       isActive 
                         ? 'bg-gradient-to-r from-red-50 to-purple-50 text-red-600 border border-red-200' 
                         : 'text-gray-700 hover:text-red-600 hover:bg-red-50'
                     }`}
                   >
-                    <span 
-                      className="text-lg"
-                    >
-                      {item.icon}
-                    </span>
                     <span>{item.label}</span>
                     {isActive && (
                       <div 
@@ -136,28 +131,25 @@ const Navbar = () => {
                 {/* Documents Link - For both students and admins/teachers */}
                 <Link 
                   to="/documents" 
-                  className="flex items-center space-x-2 px-4 py-2 rounded-lg font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-300"
+                  className="px-4 py-2 rounded-lg font-medium text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-300"
                 >
-                  <span className="text-lg">📚</span>
-                  <span>Materials</span>
+                   Study Materials
                 </Link>
                 
                 {user.role === 'student' && (
                   <Link 
                     to="/student/dashboard" 
-                    className="flex items-center space-x-2 px-4 py-2 rounded-lg font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 transition-all duration-300"
+                    className="px-4 py-2 rounded-lg font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 transition-all duration-300"
                   >
-                    <span className="text-lg">📊</span>
-                    <span>Dashboard</span>
+                    Dashboard
                   </Link>
                 )}
                 {user.role === 'admin' && (
                   <Link 
                     to="/admin/dashboard" 
-                    className="flex items-center space-x-2 px-4 py-2 rounded-lg font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 transition-all duration-300"
+                    className="px-4 py-2 rounded-lg font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 transition-all duration-300"
                   >
-                    <span className="text-lg">👨‍💼</span>
-                    <span>Admin Panel</span>
+                    Admin Panel
                   </Link>
                 )}
               </div>
@@ -200,10 +192,7 @@ const Navbar = () => {
                   onClick={handleLogout}
                   className="relative px-5 py-2 bg-gradient-to-r from-red-600 to-purple-900 text-white rounded-lg hover:shadow-lg font-medium overflow-hidden group"
                 >
-                  <span className="relative z-10 flex items-center">
-                    <span className="mr-2">🚪</span>
-                    Logout
-                  </span>
+                  <span className="relative z-10">Logout</span>
                   <div 
                     className="absolute inset-0 bg-gradient-to-r from-purple-900 to-red-600"
                   />
@@ -215,23 +204,15 @@ const Navbar = () => {
               >
                 <Link 
                   to="/login" 
-                  className="flex items-center space-x-2 px-5 py-2 text-gray-700 hover:text-red-600 font-medium rounded-lg hover:bg-red-50 transition-all duration-300 group"
+                  className="px-5 py-2 text-gray-700 hover:text-red-600 font-medium rounded-lg hover:bg-red-50 transition-all duration-300 group"
                 >
-                  <span 
-                    className="text-lg"
-                  >
-                    🔑
-                  </span>
-                  <span>Login</span>
+                  Login
                 </Link>
                 <Link 
                   to="/signup" 
                   className="relative px-6 py-2.5 bg-gradient-to-r from-red-600 to-purple-900 text-white rounded-lg hover:shadow-lg font-medium overflow-hidden group"
                 >
-                  <span className="relative z-10 flex items-center">
-                    <span className="mr-2">📝</span>
-                    Sign Up
-                  </span>
+                  <span className="relative z-10">Sign Up</span>
                   <div 
                     className="absolute inset-0 bg-gradient-to-r from-purple-900 to-red-600"
                   />
@@ -290,11 +271,6 @@ const Navbar = () => {
                           }`}
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
-                          <span 
-                            className="text-xl"
-                          >
-                            {item.icon}
-                          </span>
                           <span className="text-lg">{item.label}</span>
                           {isActive && (
                             <div 
@@ -310,13 +286,20 @@ const Navbar = () => {
                   {isAuthenticated && user && (
                     <div
                     >
+                      <Link 
+                        to="/documents" 
+                        className="flex items-center space-x-3 px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-100 transition-all duration-300"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        <span className="text-lg">Study Materials</span>
+                      </Link>
+                      
                       {user.role === 'student' && (
                         <Link 
                           to="/student/dashboard" 
                           className="flex items-center space-x-3 px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-100 transition-all duration-300"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
-                          <span className="text-xl">📊</span>
                           <span className="text-lg">Dashboard</span>
                         </Link>
                       )}
@@ -326,7 +309,6 @@ const Navbar = () => {
                           className="flex items-center space-x-3 px-4 py-3 rounded-lg font-medium text-gray-700 hover:bg-gray-100 transition-all duration-300"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
-                          <span className="text-xl">👨‍💼</span>
                           <span className="text-lg">Admin Panel</span>
                         </Link>
                       )}
@@ -358,29 +340,26 @@ const Navbar = () => {
                         </div>
                         <button
                           onClick={handleLogout}
-                          className="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-purple-900 text-white rounded-lg hover:shadow-lg font-medium flex items-center justify-center space-x-2"
+                          className="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-purple-900 text-white rounded-lg hover:shadow-lg font-medium text-center"
                         >
-                          <span className="text-lg">🚪</span>
-                          <span>Logout</span>
+                          Logout
                         </button>
                       </>
                     ) : (
                       <div className="flex flex-col space-y-3">
                         <Link 
                           to="/login" 
-                          className="w-full px-4 py-3 text-center bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium flex items-center justify-center space-x-2"
+                          className="w-full px-4 py-3 text-center bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
-                          <span className="text-lg">🔑</span>
-                          <span>Login</span>
+                          Login
                         </Link>
                         <Link 
                           to="/signup" 
-                          className="w-full px-4 py-3 text-center bg-gradient-to-r from-red-600 to-purple-900 text-white rounded-lg hover:shadow-lg font-medium flex items-center justify-center space-x-2"
+                          className="w-full px-4 py-3 text-center bg-gradient-to-r from-red-600 to-purple-900 text-white rounded-lg hover:shadow-lg font-medium"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
-                          <span className="text-lg">📝</span>
-                          <span>Sign Up</span>
+                          Sign Up
                         </Link>
                       </div>
                     )}
