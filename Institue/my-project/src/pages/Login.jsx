@@ -1,470 +1,418 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { authAPI } from "../services/api";
 
 const Login = () => {
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState(Array(6).fill(""));
-  const [step, setStep] = useState(1); // 1: Enter Phone, 2: Enter OTP, 3: Complete Profile
-  const [isNewUser, setIsNewUser] = useState(false);
-  
-  // Registration data for step 3
-  const [registrationData, setRegistrationData] = useState({
-    name: "",
+  const [formData, setFormData] = useState({
     email: "",
-    course: ""
+    password: "",
   });
-
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Forgot Password modal state
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1); // 1: Send OTP, 2: Reset Password
+  const [forgotData, setForgotData] = useState({
+    phone: "",
+    otp: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [forgotErrors, setForgotErrors] = useState({});
+  const [forgotMessage, setForgotMessage] = useState("");
+  const [forgotSubmitting, setForgotSubmitting] = useState(false);
   const [autoReceivedOtp, setAutoReceivedOtp] = useState("");
-  const [timer, setTimer] = useState(30);
 
+  const { login } = useAuth();
   const navigate = useNavigate();
-  const otpInputsRef = useRef([]);
 
-  // Resend OTP timer logic
-  useEffect(() => {
-    let interval = null;
-    if (step === 2 && timer > 0) {
-      interval = setInterval(() => {
-        setTimer((prev) => prev - 1);
-      }, 1000);
-    } else if (timer === 0) {
-      clearInterval(interval);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
-    return () => clearInterval(interval);
-  }, [step, timer]);
+    if (errors.general) {
+      setErrors((prev) => ({ ...prev, general: "" }));
+    }
+  };
 
-  // Step 1: Send OTP to Phone
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    if (!formData.password) newErrors.password = "Password is required";
+    return newErrors;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrors({});
+
+    try {
+      const result = await login({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (!result || !result.success) {
+        setErrors({
+          general: result?.error || "Invalid email or password",
+        });
+        return;
+      }
+
+      if (result.user.role === "admin") {
+        window.location.href = "/admin/dashboard";
+      } else {
+        window.location.href = "/student/dashboard";
+      }
+    } catch (error) {
+      setErrors({ general: "Login failed. Please try again." });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Forgot Password modal functions
+  const handleForgotChange = (e) => {
+    const { name, value } = e.target;
+    setForgotData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    if (forgotErrors[name]) {
+      setForgotErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
   const handleSendOTP = async (e) => {
     e.preventDefault();
-    if (!phone || !/^[0-9]{10}$/.test(phone)) {
-      setErrors({ phone: "Please enter a valid 10-digit mobile number" });
+    if (!forgotData.phone.trim() || !/^[0-9]{10}$/.test(forgotData.phone.trim())) {
+      setForgotErrors({ phone: "Please enter a valid 10-digit phone number" });
       return;
     }
 
-    setIsSubmitting(true);
-    setErrors({});
+    setForgotSubmitting(true);
+    setForgotErrors({});
+    setForgotMessage("");
+
     try {
-      const response = await authAPI.sendLoginOTP({ phone });
+      const response = await authAPI.sendOTP({ phone: forgotData.phone.trim() });
       if (response.data.success) {
-        setIsNewUser(response.data.isNewUser);
-        setStep(2);
-        setTimer(30);
-        
-        // Auto fill OTP in dev mode
+        setForgotMessage("OTP sent successfully. Please check your phone.");
+        setForgotStep(2);
+
         if (response.data.otp) {
           setAutoReceivedOtp(response.data.otp);
-          setOtp(response.data.otp.split(""));
-          console.log("🔥 [DEV TEST] Auto-captured OTP:", response.data.otp);
+          setForgotData((prev) => ({ ...prev, otp: response.data.otp }));
         }
-      } else {
-        setErrors({ general: response.data.message || "Failed to send OTP" });
       }
     } catch (err) {
-      setErrors({
-        general: err.response?.data?.message || "Failed to send OTP. Please try again."
+      setForgotErrors({
+        general:
+          err.response?.data?.message ||
+          "Failed to send OTP. Please make sure the number is registered.",
       });
     } finally {
-      setIsSubmitting(false);
+      setForgotSubmitting(false);
     }
   };
 
-  // Step 2: Verify OTP
-  const handleVerifyOTP = async (e) => {
+  const handleResetPassword = async (e) => {
     e.preventDefault();
-    const otpCode = otp.join("");
-    if (otpCode.length !== 6 || isNaN(otpCode)) {
-      setErrors({ otp: "Please enter a 6-digit OTP code" });
+    const errs = {};
+    if (!forgotData.otp.trim()) errs.otp = "OTP is required";
+    if (!forgotData.newPassword) errs.newPassword = "New password is required";
+    if (forgotData.newPassword.length < 6)
+      errs.newPassword = "Password must be at least 6 characters";
+    if (forgotData.newPassword !== forgotData.confirmPassword) {
+      errs.confirmPassword = "Passwords do not match";
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setForgotErrors(errs);
       return;
     }
 
-    setIsSubmitting(true);
-    setErrors({});
+    setForgotSubmitting(true);
+    setForgotErrors({});
+    setForgotMessage("");
+
     try {
-      const response = await authAPI.verifyLoginOTP({ phone, otp: otpCode });
-      if (response.data.success) {
-        if (response.data.isNewUser) {
-          // New user: must complete registration (Step 3)
-          setStep(3);
-        } else {
-          // Existing user: logged in successfully
-          const { token, user } = response.data;
-          localStorage.setItem("token", token);
-          localStorage.setItem("user", JSON.stringify(user));
-          
-          if (user.role === "admin") {
-            window.location.href = "/admin/dashboard";
-          } else {
-            window.location.href = "/student/dashboard";
-          }
-        }
-      } else {
-        setErrors({ otp: response.data.message || "Invalid OTP code" });
-      }
-    } catch (err) {
-      setErrors({
-        otp: err.response?.data?.message || "OTP verification failed. Please try again."
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Step 3: Complete Registration
-  const handleCompleteRegistration = async (e) => {
-    e.preventDefault();
-    const { name, email, course } = registrationData;
-    const newErrors = {};
-
-    if (!name.trim()) newErrors.name = "Full name is required";
-    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = "Valid email is required";
-    if (!course) newErrors.course = "Please select your class or course";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    setIsSubmitting(true);
-    setErrors({});
-    try {
-      const response = await authAPI.completeOTPRegistration({
-        phone,
-        name,
-        email,
-        course
+      const response = await authAPI.resetPasswordOTP({
+        phone: forgotData.phone.trim(),
+        otp: forgotData.otp.trim(),
+        newPassword: forgotData.newPassword,
       });
 
       if (response.data.success) {
-        const { token, user } = response.data;
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
-        
-        window.location.href = "/student/dashboard";
-      } else {
-        setErrors({ general: response.data.message || "Failed to complete registration" });
+        setForgotMessage("Password reset successfully! Closing modal...");
+        setTimeout(() => {
+          setShowForgotModal(false);
+          setForgotStep(1);
+          setForgotData({ phone: "", otp: "", newPassword: "", confirmPassword: "" });
+          setAutoReceivedOtp("");
+          setForgotMessage("");
+        }, 2000);
       }
     } catch (err) {
-      setErrors({
-        general: err.response?.data?.message || "Failed to complete registration. Please try again."
+      setForgotErrors({
+        general:
+          err.response?.data?.message ||
+          "Failed to reset password. Please check your OTP.",
       });
     } finally {
-      setIsSubmitting(false);
+      setForgotSubmitting(false);
     }
   };
-
-  // OTP inputs handlers
-  const handleOtpInputChange = (e, idx) => {
-    const val = e.target.value;
-    if (isNaN(val)) return;
-
-    const newOtp = [...otp];
-    newOtp[idx] = val.substring(val.length - 1);
-    setOtp(newOtp);
-
-    // Auto-focus next input
-    if (val && idx < 5) {
-      otpInputsRef.current[idx + 1].focus();
-    }
-  };
-
-  const handleOtpKeyDown = (e, idx) => {
-    if (e.key === "Backspace") {
-      if (!otp[idx] && idx > 0) {
-        const newOtp = [...otp];
-        newOtp[idx - 1] = "";
-        setOtp(newOtp);
-        otpInputsRef.current[idx - 1].focus();
-      } else {
-        const newOtp = [...otp];
-        newOtp[idx] = "";
-        setOtp(newOtp);
-      }
-    }
-  };
-
-  // Courses list matching standard signup page
-  const courses = [
-    "Class 1", "Class 2", "Class 3", "Class 4", "Class 5",
-    "Class 6", "Class 7", "Class 8",
-    "Class 9", "Class 10",
-    "Class 11 (Commerce)", "Class 12 (Commerce)",
-    "B.COM 1st Year", "B.COM 2nd Year", "B.COM 3rd Year",
-    "M.COM",
-    "Competition Exams"
-  ];
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center py-8 px-6 lg:px-12 bg-white fade-in">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center max-w-5xl w-full mx-auto">
-        
-        {/* Left Side: Login / Verification Box */}
-        <div className="lg:col-span-7 flex flex-col justify-center max-w-md mx-auto lg:mx-0 w-full">
-          
-          {step === 1 && (
-            <>
-              <h1 className="text-4xl lg:text-5xl font-extrabold text-[#3c4852] leading-tight tracking-tight mb-2">
-                Crack your goal with Sharma Institute's top educators
-              </h1>
-              <p className="text-sm text-gray-500 font-medium mb-6">
-                Over 10 crore learners trust us for their preparation
-              </p>
+    <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 bg-gray-50 fade-in">
+      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+        <div className="text-center">
+          <h2 className="text-3xl font-extrabold text-[#1a365d]">Welcome Back</h2>
+          <p className="mt-2 text-sm text-gray-500">
+            Sign in to your coaching account to access lectures & materials
+          </p>
+        </div>
 
-              {errors.general && (
-                <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-semibold animate-shake">
-                  {errors.general}
-                </div>
-              )}
-
-              <form onSubmit={handleSendOTP} className="space-y-4">
-                <div className={`border rounded-xl flex items-center px-4 py-3 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all ${errors.phone ? 'border-red-500' : 'border-[#d0d6de]'}`}>
-                  <div className="flex items-center gap-1.5 cursor-default mr-3 pr-3 border-r border-[#e9edf2] text-sm text-[#3c4852] font-semibold">
-                    <span className="text-lg">🇮🇳</span>
-                    <span>+91</span>
-                    <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                  <input
-                    type="tel"
-                    maxLength={10}
-                    value={phone}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, "");
-                      setPhone(val);
-                      if (errors.phone) setErrors({});
-                    }}
-                    placeholder="Enter your mobile number"
-                    className="w-full text-base text-[#3c4852] font-semibold placeholder:text-gray-400 placeholder:font-normal focus:outline-none bg-transparent"
-                    disabled={isSubmitting}
-                    required
-                  />
-                </div>
-                {errors.phone && (
-                  <p className="text-xs text-red-600 font-semibold">{errors.phone}</p>
-                )}
-
-                <p className="text-xs text-[#7a8b94] font-medium mt-1">
-                  We'll send an OTP for verification
-                </p>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full mt-4 py-3.5 bg-[#3c4852] hover:bg-[#2c3842] disabled:bg-gray-300 text-white font-bold text-base rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
-                >
-                  {isSubmitting ? "Sending OTP..." : "Join for free"}
-                </button>
-              </form>
-
-              <p className="mt-6 text-center text-sm text-gray-400 font-medium">
-                New user? Enter your number to get registered instantly!
-              </p>
-            </>
+        <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
+          {errors.general && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {errors.general}
+            </div>
           )}
 
-          {step === 2 && (
-            <>
-              <div className="flex items-center gap-2 mb-4">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Email Address
+              </label>
+              <input
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
+                  errors.email ? "border-red-500" : "border-gray-300 bg-blue-50/30"
+                }`}
+                placeholder="Enter your email"
+                disabled={isSubmitting}
+              />
+              {errors.email && (
+                <p className="mt-1 text-xs text-red-600">{errors.email}</p>
+              )}
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-semibold text-gray-700">
+                  Password
+                </label>
                 <button
-                  onClick={() => {
-                    setStep(1);
-                    setOtp(Array(6).fill(""));
-                    setErrors({});
-                  }}
-                  className="text-gray-500 hover:text-gray-700 flex items-center gap-1 text-sm font-semibold"
+                  type="button"
+                  onClick={() => setShowForgotModal(true)}
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-800 focus:outline-none"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
-                  </svg>
-                  Change number
+                  Forgot Password?
                 </button>
               </div>
-
-              <h2 className="text-2xl lg:text-3xl font-extrabold text-[#3c4852] leading-tight tracking-tight mb-2">
-                Verify OTP
-              </h2>
-              <p className="text-sm text-gray-500 font-medium mb-6">
-                Enter the 6-digit OTP code sent to <strong className="text-gray-800">+91 {phone}</strong>
-              </p>
-
-              {autoReceivedOtp && (
-                <div className="mb-6 p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded-lg text-xs">
-                  💡 <strong>Test Helper:</strong> Auto-captured OTP code is: <strong>{autoReceivedOtp}</strong> (already filled).
-                </div>
+              <input
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${
+                  errors.password ? "border-red-500" : "border-gray-300 bg-blue-50/30"
+                }`}
+                placeholder="Enter your password"
+                disabled={isSubmitting}
+              />
+              {errors.password && (
+                <p className="mt-1 text-xs text-red-600">{errors.password}</p>
               )}
+            </div>
+          </div>
 
-              <form onSubmit={handleVerifyOTP} className="space-y-6">
-                <div className="flex justify-between gap-2 max-w-sm">
-                  {otp.map((digit, idx) => (
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className={`w-full py-2.5 px-4 rounded-lg text-white font-semibold text-sm transition-all duration-200 ${
+              isSubmitting
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 shadow-sm"
+            }`}
+          >
+            {isSubmitting ? "Signing in..." : "Sign In"}
+          </button>
+        </form>
+
+        <p className="text-center text-sm text-gray-500 pt-2">
+          Don't have an account?{" "}
+          <Link to="/signup" className="text-blue-600 font-semibold hover:text-blue-800">
+            Sign up
+          </Link>
+        </p>
+      </div>
+
+      {/* OTP Password Reset Modal */}
+      {showForgotModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative border border-gray-100">
+            <button
+              onClick={() => {
+                setShowForgotModal(false);
+                setForgotStep(1);
+                setForgotData({ phone: "", otp: "", newPassword: "", confirmPassword: "" });
+                setAutoReceivedOtp("");
+                setForgotErrors({});
+                setForgotMessage("");
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold"
+            >
+              &times;
+            </button>
+
+            <h3 className="text-xl font-extrabold text-blue-900 mb-2">Forgot Password?</h3>
+            <p className="text-xs text-gray-500 mb-5">
+              Reset your password using phone number OTP authentication.
+            </p>
+
+            {forgotErrors.general && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-xs font-semibold">
+                {forgotErrors.general}
+              </div>
+            )}
+            {forgotMessage && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-xs font-semibold">
+                {forgotMessage}
+              </div>
+            )}
+
+            {forgotStep === 1 ? (
+              <form onSubmit={handleSendOTP} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Registered Mobile Number
+                  </label>
+                  <div className="flex gap-2">
+                    <span className="inline-flex items-center px-3 border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-l-lg">
+                      +91
+                    </span>
                     <input
-                      key={idx}
-                      ref={(el) => (otpInputsRef.current[idx] = el)}
-                      type="text"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleOtpInputChange(e, idx)}
-                      onKeyDown={(e) => handleOtpKeyDown(e, idx)}
-                      className={`w-12 h-14 border rounded-xl text-center font-bold text-xl text-[#3c4852] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.otp ? "border-red-500" : "border-[#d0d6de]"
+                      type="tel"
+                      name="phone"
+                      maxLength={10}
+                      value={forgotData.phone}
+                      onChange={handleForgotChange}
+                      placeholder="Enter 10-digit number"
+                      className={`w-full px-3 py-2 border rounded-r-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        forgotErrors.phone ? "border-red-500" : "border-gray-300"
                       }`}
-                      disabled={isSubmitting}
+                      required
                     />
-                  ))}
+                  </div>
+                  {forgotErrors.phone && (
+                    <p className="mt-1 text-xs text-red-600">{forgotErrors.phone}</p>
+                  )}
                 </div>
-                {errors.otp && (
-                  <p className="text-xs text-red-600 font-semibold">{errors.otp}</p>
+                <button
+                  type="submit"
+                  disabled={forgotSubmitting}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition-colors shadow-sm"
+                >
+                  {forgotSubmitting ? "Sending OTP..." : "Request Verification OTP"}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                {autoReceivedOtp && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded-lg text-xs">
+                    💡 <strong>Test Helper:</strong> Auto-captured OTP code is: <strong>{autoReceivedOtp}</strong>.
+                  </div>
                 )}
 
-                <div className="flex items-center justify-between text-sm">
-                  {timer > 0 ? (
-                    <span className="text-gray-400 font-medium">Resend OTP in {timer}s</span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleSendOTP}
-                      className="text-blue-600 hover:text-blue-800 font-semibold"
-                    >
-                      Resend OTP
-                    </button>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">OTP Code</label>
+                  <input
+                    type="text"
+                    name="otp"
+                    value={forgotData.otp}
+                    onChange={handleForgotChange}
+                    maxLength={6}
+                    placeholder="Enter 6-digit OTP"
+                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-center tracking-widest font-bold ${
+                      forgotErrors.otp ? "border-red-500" : "border-gray-300"
+                    }`}
+                    required
+                  />
+                  {forgotErrors.otp && (
+                    <p className="mt-1 text-xs text-red-600">{forgotErrors.otp}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">New Password</label>
+                  <input
+                    type="password"
+                    name="newPassword"
+                    value={forgotData.newPassword}
+                    onChange={handleForgotChange}
+                    placeholder="Min 6 characters"
+                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      forgotErrors.newPassword ? "border-red-500" : "border-gray-300"
+                    }`}
+                    required
+                  />
+                  {forgotErrors.newPassword && (
+                    <p className="mt-1 text-xs text-red-600">{forgotErrors.newPassword}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Confirm New Password</label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={forgotData.confirmPassword}
+                    onChange={handleForgotChange}
+                    placeholder="Re-enter password"
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      forgotErrors.confirmPassword ? "border-red-500" : "border-gray-300"
+                    }`}
+                    required
+                  />
+                  {forgotErrors.confirmPassword && (
+                    <p className="mt-1 text-xs text-red-600">{forgotErrors.confirmPassword}</p>
                   )}
                 </div>
 
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-3.5 bg-[#3c4852] hover:bg-[#2c3842] disabled:bg-gray-300 text-white font-bold text-base rounded-xl transition-all shadow-sm"
+                  disabled={forgotSubmitting}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition-colors shadow-sm"
                 >
-                  {isSubmitting ? "Verifying..." : "Verify & Proceed"}
+                  {forgotSubmitting ? "Resetting..." : "Confirm & Reset Password"}
                 </button>
               </form>
-            </>
-          )}
-
-          {step === 3 && (
-            <>
-              <h2 className="text-2xl lg:text-3xl font-extrabold text-[#3c4852] leading-tight tracking-tight mb-2">
-                Complete Your Profile
-              </h2>
-              <p className="text-sm text-gray-500 font-medium mb-6">
-                Enter your details to finalize your registration for Sharma Institute
-              </p>
-
-              {errors.general && (
-                <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-semibold">
-                  {errors.general}
-                </div>
-              )}
-
-              <form onSubmit={handleCompleteRegistration} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Full Name</label>
-                  <input
-                    type="text"
-                    value={registrationData.name}
-                    onChange={(e) => {
-                      setRegistrationData({ ...registrationData, name: e.target.value });
-                      if (errors.name) setErrors({ ...errors, name: "" });
-                    }}
-                    placeholder="Enter your full name"
-                    className={`w-full px-4 py-2.5 border rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.name ? "border-red-500" : "border-[#d0d6de]"
-                    }`}
-                    disabled={isSubmitting}
-                    required
-                  />
-                  {errors.name && <p className="mt-1 text-xs text-red-600 font-semibold">{errors.name}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    value={registrationData.email}
-                    onChange={(e) => {
-                      setRegistrationData({ ...registrationData, email: e.target.value });
-                      if (errors.email) setErrors({ ...errors, email: "" });
-                    }}
-                    placeholder="name@gmail.com"
-                    className={`w-full px-4 py-2.5 border rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.email ? "border-red-500" : "border-[#d0d6de]"
-                    }`}
-                    disabled={isSubmitting}
-                    required
-                  />
-                  {errors.email && <p className="mt-1 text-xs text-red-600 font-semibold">{errors.email}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Select Your Course / Class</label>
-                  <select
-                    value={registrationData.course}
-                    onChange={(e) => {
-                      setRegistrationData({ ...registrationData, course: e.target.value });
-                      if (errors.course) setErrors({ ...errors, course: "" });
-                    }}
-                    className={`w-full px-4 py-2.5 border rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white ${
-                      errors.course ? "border-red-500" : "border-[#d0d6de]"
-                    }`}
-                    disabled={isSubmitting}
-                    required
-                  >
-                    <option value="">Choose your class...</option>
-                    {courses.map((course, idx) => (
-                      <option key={idx} value={course}>
-                        {course}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.course && <p className="mt-1 text-xs text-red-600 font-semibold">{errors.course}</p>}
-                </div>
-
-                <div className="flex items-start mt-2">
-                  <input
-                    type="checkbox"
-                    id="terms"
-                    required
-                    defaultChecked
-                    className="mt-1 mr-3 rounded text-blue-600 focus:ring-blue-500"
-                  />
-                  <label htmlFor="terms" className="text-xs text-gray-500 font-medium">
-                    I agree to the{" "}
-                    <a href="#" className="text-blue-600 font-bold hover:underline">Terms & Conditions</a>
-                    {" "}and{" "}
-                    <a href="#" className="text-blue-600 font-bold hover:underline">Privacy Policy</a>.
-                  </label>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full mt-4 py-3.5 bg-[#3c4852] hover:bg-[#2c3842] disabled:bg-gray-300 text-white font-bold text-base rounded-xl transition-all shadow-sm"
-                >
-                  {isSubmitting ? "Finalizing..." : "Complete Registration & Login"}
-                </button>
-              </form>
-            </>
-          )}
-        </div>
-
-        {/* Right Side: Flat Vector Illustration in Circular Border */}
-        <div className="lg:col-span-5 hidden lg:flex items-center justify-center">
-          <div className="w-[600px] h-[600px] xl:w-[540px] xl:h-[540px] flex items-center justify-center overflow-hidden transition-all duration-300 hover:scale-[1.02]">
-            <img
-              src="https://plus.unsplash.com/premium_vector-1682307798482-3d415c287228?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-              alt="Student reading vector illustration"
-              className="w-full h-full object-contain select-none"
-              onError={(e) => {
-                e.target.src = "https://img.freepik.com/free-vector/learning-concept-illustration_114360-6186.jpg";
-              }}
-            />
+            )}
           </div>
         </div>
-
-      </div>
+      )}
     </div>
   );
 };
