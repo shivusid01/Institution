@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { userAPI } from '../../services/api'
+import { userAPI, courseAPI } from '../../services/api'
 
 const AdminDashboard = () => {
   const { currentUser } = useAuth()
@@ -24,10 +24,25 @@ const AdminDashboard = () => {
     enrollmentDate: new Date().toISOString().split('T')[0]
   })
 
-  // Fetch all students on component mount
+  // Fetch all students and courses on component mount
   useEffect(() => {
     fetchAllStudents()
+    fetchCourses()
   }, [])
+
+  const fetchCourses = async () => {
+    try {
+      const response = await courseAPI.getAllCourses()
+      if (response.data.success) {
+        const activeCourses = response.data.courses
+          .filter(course => course.classType === 'course' && course.status === 'active')
+          .map(course => course.name);
+        setClassOptions([...new Set(activeCourses)]);
+      }
+    } catch (error) {
+      console.error('Error fetching courses:', error)
+    }
+  }
 
   const fetchAllStudents = async () => {
     try {
@@ -286,14 +301,7 @@ Instructions:
   }
 
   // Available classes
-  const classOptions = [
-    'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
-    'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
-    'Class 11 (Commerce)', 'Class 12 (Commerce)', 'B.COM 1st Year',
-    'B.COM 2nd Year',
-    'B.COM 3rd Year','M.COM',
-    'Competition'
-  ]
+  const [classOptions, setClassOptions] = useState([])
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -606,7 +614,7 @@ Instructions:
                               student.status === 'active' 
                                 ? 'bg-green-100 text-green-800'
                                 : student.status === 'inactive'
-                                ? 'bg-red-100 text-red-800'
+                                ? 'bg-red-100 text-blue-800'
                                 : 'bg-yellow-100 text-yellow-800'
                             }`}>
                               {student.status || 'active'}
@@ -630,7 +638,7 @@ Instructions:
                               </Link>
                               <button
                                 onClick={() => handleDeleteStudent(student._id)}
-                                className="text-red-600 hover:text-red-800 text-sm font-medium"
+                                className="text-red-600 hover:text-blue-800 text-sm font-medium"
                                 title="Delete"
                               >
                                 🗑️
@@ -657,8 +665,8 @@ Instructions:
                       {students.filter(s => s.status === 'active').length}
                     </div>
                   </div>
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <div className="text-sm text-purple-600">This Month</div>
+                  <div className="bg-blue-50/50 p-4 rounded-lg">
+                    <div className="text-sm text-blue-600">This Month</div>
                     <div className="text-2xl font-bold">
                       {students.filter(s => {
                         const joinDate = new Date(s.createdAt)
@@ -744,8 +752,8 @@ Instructions:
 
               <div className="flex justify-between items-center">
                 <div className="flex items-center">
-                  <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center mr-3">
-                    <span className="text-purple-600">🎓</span>
+                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                    <span className="text-blue-600">🎓</span>
                   </div>
                   <div>
                     <div className="font-medium">Active Classes</div>

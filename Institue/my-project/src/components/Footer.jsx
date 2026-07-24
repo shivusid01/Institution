@@ -12,7 +12,7 @@ const Footer = () => {
           {/* Brand */}
           <div
           >
-            <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-red-400 to-purple-400 bg-clip-text text-transparent">
+            <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r text-white bg-clip-text text-transparent">
               Sharma Institute
             </h2>
             <p className="text-gray-400">
@@ -83,7 +83,7 @@ const Footer = () => {
               </li>
               <li
               >
-                Email: Sharmainstitute@gmail.com
+                Email: Sharmainstitute65@gmail.com
               </li>
             </ul>
           </div>

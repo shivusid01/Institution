@@ -5,12 +5,12 @@ const ImageSlider = () => {
   const [currentIndex, setCurrentIndex] = useState(0)
 
   const images = [
-    { id: 1, src: "/Images/slide1.jpeg", alt: "Academic Classes Excellence" },
-    { id: 2, src: "/Images/image.png", alt: "Admission Open" },
-    { id: 3, src: "/Images/slide3.jpeg", alt: "CBSE & JAC Board" },
-    { id: 4, src: "/Images/slide4.jpeg", alt: "Expert Faculty" },
-    { id: 5, src: "/Images/slide5.jpeg", alt: "Success Stories" },
-    { id: 6, src: "/Images/slide6.jpeg", alt: "Limited Seats" }
+    { id: 1, src: "/Images/slide1.jpeg" },
+    { id: 2, src: "/Images/image.png" },
+    { id: 3, src: "/Images/slide3.jpeg" },
+    { id: 4, src: "/Images/slide4.jpeg" },
+    { id: 5, src: "/Images/slide5.jpeg"},
+    { id: 6, src: "/Images/slide6.jpeg" }
   ]
 
   useEffect(() => {
@@ -87,14 +87,8 @@ const ImageSlider = () => {
       </div>
 
       {/* MOVING TEXT STRIP (MARQUEE STYLE) */}
-      <div className="bg-gradient-to-r from-red-600 to-purple-800 text-white py-2 overflow-hidden">
-        <div className="whitespace-nowrap animate-marquee text-sm md:text-base font-medium">
-          🎓 Admissions Open 2026 &nbsp;&nbsp; | &nbsp;&nbsp;
-          📚 CBSE & JAC Board तैयारी &nbsp;&nbsp; | &nbsp;&nbsp;
-          🏆 1000+ Successful Students &nbsp;&nbsp; | &nbsp;&nbsp;
-          👨‍🏫 Expert Faculty Available &nbsp;&nbsp; | &nbsp;&nbsp;
-          ⚡ Limited Seats – Enroll Now!
-        </div>
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-2 overflow-hidden">
+       
       </div>
 
       {/* DOTS */}
@@ -105,7 +99,7 @@ const ImageSlider = () => {
             onClick={() => goToSlide(index)}
             className={`transition-all duration-300 rounded-full ${
               index === currentIndex
-                ? 'w-5 h-1.5 bg-gradient-to-r from-red-500 to-purple-600'
+                ? 'w-5 h-1.5 bg-gradient-to-r from-blue-500 to-blue-600'
                 : 'w-1.5 h-1.5 bg-gray-400'
             }`}
           />

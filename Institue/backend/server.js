@@ -101,6 +101,17 @@ if (process.env.NODE_ENV === 'development') {
 
 /* ===================== STATIC FILES ===================== */
 
+// Ensure required upload directories exist
+const fs = require('fs');
+const dirs = ['uploads', 'uploads/profiles', 'uploads/documents', 'uploads/syllabus'];
+dirs.forEach(dir => {
+  const dirPath = path.join(__dirname, dir);
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+    console.log(`📁 Created folder: ${dir}`);
+  }
+});
+
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -108,12 +119,217 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 connectDB();
 
+// Default courses data for public catalog seeding
+const defaultCourses = [
+  {
+    name: 'Academic (Class 1-8)',
+    description: 'Master your academics with our end-to-end guidance and proven strategy.',
+    category: 'School Level',
+    duration: '1 Year',
+    fee: '₹2,500 - 7,500',
+    subjects: ['Hindi', 'English', 'Maths', 'Science', 'Social Science'],
+    features: ['Daily Live Classes', 'Study Material', 'Mock Tests', 'Doubt Sessions'],
+    language: 'Hindi',
+    tag: 'Most Popular',
+    instructor: 'Mr. Jeetlal Sharma',
+    classType: 'course',
+    status: 'active'
+  },
+  {
+    name: 'Academic (Class 1-8)',
+    description: 'Master your academics with our end-to-end guidance and proven strategy.',
+    category: 'School Level',
+    duration: '1 Year',
+    fee: '₹3,500 - 9,000',
+    subjects: ['Hindi', 'English', 'Maths', 'Science', 'Social Science'],
+    features: ['Daily Live Classes', 'Study Material', 'Mock Tests', 'Doubt Sessions'],
+    language: 'English',
+    tag: 'Most Popular',
+    instructor: 'Mr. Jeetlal Sharma',
+    classType: 'course',
+    status: 'active'
+  },
+  {
+    name: 'Foundation (Class 9-10)',
+    description: 'Build strong fundamentals for future competitive exams.',
+    category: 'School Level',
+    duration: '2 Years',
+    fee: '₹35,000/year',
+    subjects: ['Maths', 'Science', 'English', 'Social Science'],
+    features: ['Concept Building', 'Olympiad Prep', 'Activity Based', 'Regular Tests'],
+    language: 'Hindi',
+    instructor: 'Mr. Jeetlal Sharma',
+    classType: 'course',
+    status: 'active'
+  },
+  {
+    name: 'Foundation (Class 9-10)',
+    description: 'Build strong fundamentals for future competitive exams.',
+    category: 'School Level',
+    duration: '2 Years',
+    fee: '₹40,000/year',
+    subjects: ['Maths', 'Science', 'English', 'Social Science'],
+    features: ['Concept Building', 'Olympiad Prep', 'Activity Based', 'Regular Tests'],
+    language: 'English',
+    instructor: 'Mr. Jeetlal Sharma',
+    classType: 'course',
+    status: 'active'
+  },
+  {
+    name: 'CBSE 11-12 (Commerce)',
+    description: 'Comprehensive board exam preparation with experienced faculty.',
+    category: 'Commerce',
+    duration: '2 Years',
+    fee: '₹10,000',
+    subjects: ['Accounts', 'B. Studies', 'B. Maths', 'Economics'],
+    features: ['Video Lectures', 'Practice Papers', 'Revision Tests', 'Personal Guidance'],
+    language: 'Hindi',
+    instructor: 'Mr. Jeetlal Sharma',
+    classType: 'course',
+    status: 'active'
+  },
+  {
+    name: 'CBSE 11-12 (Commerce)',
+    description: 'Comprehensive board exam preparation with experienced faculty.',
+    category: 'Commerce',
+    duration: '2 Years',
+    fee: '₹12,000',
+    subjects: ['Accounts', 'B. Studies', 'B. Maths', 'Economics'],
+    features: ['Video Lectures', 'Practice Papers', 'Revision Tests', 'Personal Guidance'],
+    language: 'English',
+    instructor: 'Mr. Jeetlal Sharma',
+    classType: 'course',
+    status: 'active'
+  },
+  {
+    name: 'State Board 11-12 (Commerce)',
+    description: 'Complete board and competitive exam preparation for commerce students.',
+    category: 'Commerce',
+    duration: '2 Years',
+    fee: '₹10,000',
+    subjects: ['Accounts', 'B. Studies', 'B. Maths', 'Economics'],
+    features: ['Video Lectures', 'Practice Papers', 'Revision Tests', 'Personal Guidance'],
+    language: 'Hindi',
+    instructor: 'Mr. Jeetlal Sharma',
+    classType: 'course',
+    status: 'active'
+  },
+  {
+    name: 'State Board 11-12 (Commerce)',
+    description: 'Complete board and competitive exam preparation for commerce students.',
+    category: 'Commerce',
+    duration: '2 Years',
+    fee: '₹12,000',
+    subjects: ['Accounts', 'B. Studies', 'B. Maths', 'Economics'],
+    features: ['Video Lectures', 'Practice Papers', 'Revision Tests', 'Personal Guidance'],
+    language: 'English',
+    instructor: 'Mr. Jeetlal Sharma',
+    classType: 'course',
+    status: 'active'
+  },
+  {
+    name: 'B.COM',
+    description: 'Complete exam preparation for B.Com students.',
+    category: 'Commerce',
+    duration: '4 Years',
+    fee: '₹10,000/year',
+    subjects: ['Accounts', 'Economics', 'EVS', 'English'],
+    features: ['Board Focus', 'Competitive Edge', 'Revision Tests', 'Personal Guidance'],
+    language: 'Hindi',
+    instructor: 'Mr. Jeetlal Sharma',
+    classType: 'course',
+    status: 'active'
+  },
+  {
+    name: 'B.COM',
+    description: 'Complete exam preparation for B.Com students.',
+    category: 'Commerce',
+    duration: '4 Years',
+    fee: '₹12,000/year',
+    subjects: ['Accounts', 'Economics', 'EVS', 'English'],
+    features: ['Board Focus', 'Competitive Edge', 'Revision Tests', 'Personal Guidance'],
+    language: 'English',
+    instructor: 'Mr. Jeetlal Sharma',
+    classType: 'course',
+    status: 'active'
+  },
+  {
+    name: 'M.COM',
+    description: 'Complete exam preparation for M.Com students.',
+    category: 'Commerce',
+    duration: '1 Year',
+    fee: '₹12,000',
+    subjects: ['Financial Accounting', 'B.Law', 'Economics', 'Cost Accounting'],
+    features: ['Expert Faculty', 'Case Studies', 'Revision Modules', 'Test Series'],
+    language: 'Hindi',
+    instructor: 'Mr. Jeetlal Sharma',
+    classType: 'course',
+    status: 'active'
+  },
+  {
+    name: 'M.COM',
+    description: 'Complete exam preparation for M.Com students.',
+    category: 'Commerce',
+    duration: '1 Year',
+    fee: '₹15,000',
+    subjects: ['Financial Accounting', 'B.Law', 'Economics', 'Cost Accounting'],
+    features: ['Expert Faculty', 'Case Studies', 'Revision Modules', 'Test Series'],
+    language: 'English',
+    instructor: 'Mr. Jeetlal Sharma',
+    classType: 'course',
+    status: 'active'
+  },
+  {
+    name: 'Competition Exams',
+    description: 'Integrated program for one day exam preparation from basics.',
+    category: 'Competition',
+    duration: '1 Year',
+    fee: '₹6,000/year',
+    subjects: ['GS', 'Maths', 'Reasoning', 'Current Affairs', 'Counselling'],
+    features: ['Current Affairs', 'Test Series', 'Answer Writing', 'Mentorship'],
+    language: 'Hindi',
+    instructor: 'Mr. Jeetlal Sharma',
+    classType: 'course',
+    status: 'active'
+  },
+  {
+    name: 'Competition Exams',
+    description: 'Integrated program for one day exam preparation from basics.',
+    category: 'Competition',
+    duration: '1 Year',
+    fee: '₹7,000/year',
+    subjects: ['GS', 'Maths', 'Reasoning', 'Current Affairs', 'Counselling'],
+    features: ['Current Affairs', 'Test Series', 'Answer Writing', 'Mentorship'],
+    language: 'English',
+    instructor: 'Mr. Jeetlal Sharma',
+    classType: 'course',
+    status: 'active'
+  }
+];
+
+const seedCourses = async () => {
+  try {
+    const Course = require('./models/Course');
+    const count = await Course.countDocuments({ classType: 'course' });
+    if (count === 0) {
+      console.log('🌱 Seeding default courses catalog...');
+      await Course.insertMany(defaultCourses);
+      console.log('✅ Default courses catalog seeded successfully!');
+    }
+  } catch (error) {
+    console.error('❌ Seeding courses failed:', error.message);
+  }
+};
+
 // Handle database connection events
 mongoose.connection.on('connected', () => {
   console.log('🗄️ MongoDB connected successfully');
   
   // Start cron jobs after database is connected
   setupCronJobs();
+  
+  // Seed default courses
+  seedCourses();
 });
 
 mongoose.connection.on('error', (err) => {

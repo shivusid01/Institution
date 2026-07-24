@@ -240,6 +240,14 @@ export const authAPI = {
   uploadProfileImage: (formData) => api.post('/auth/upload-profile-image', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
+
+  // GOOGLE & OTP AUTH FUNCTIONS
+  googleLogin: (data) => api.post('/auth/google-login', data),
+  sendOTP: (data) => api.post('/auth/send-otp', data),
+  resetPasswordOTP: (data) => api.post('/auth/reset-password-otp', data),
+  sendLoginOTP: (data) => api.post('/auth/send-login-otp', data),
+  verifyLoginOTP: (data) => api.post('/auth/verify-login-otp', data),
+  completeOTPRegistration: (data) => api.post('/auth/complete-otp-registration', data),
 };
 
 // ================= USER APIs =================
@@ -304,6 +312,9 @@ export const courseAPI = {
   updateCourse: (id, data) => api.put(`/courses/${id}`, data),
   deleteCourse: (id) => api.delete(`/courses/${id}`),
   enrollCourse: (courseId) => api.post(`/courses/${courseId}/enroll`),
+  uploadSyllabus: (formData) => api.post('/courses/upload-syllabus', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
 };
 // src/services/api.js में
 // classAPI object update करें:

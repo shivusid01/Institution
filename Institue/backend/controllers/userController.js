@@ -179,13 +179,22 @@ const getAllStudents = async (req, res) => {
       })
     );
     
+    const activeCount = await User.countDocuments({ role: 'student', status: 'active' });
+    const inactiveCount = await User.countDocuments({ role: 'student', status: 'inactive' });
+    const completedCount = await User.countDocuments({ role: 'student', status: 'completed' });
+
     res.status(200).json({
       success: true,
       count: students.length,
       total,
       totalPages: Math.ceil(total / limit),
       currentPage: parseInt(page),
-      students: studentsWithStats
+      students: studentsWithStats,
+      stats: {
+        activeCount,
+        inactiveCount,
+        completedCount
+      }
     });
   } catch (error) {
     res.status(500).json({

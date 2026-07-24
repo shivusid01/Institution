@@ -1,25 +1,37 @@
-import React, { useState } from 'react'
-import { documentAPI } from '../services/api'
+import React, { useState, useEffect } from 'react'
+import { documentAPI, courseAPI } from '../services/api'
 
 const UploadDocument = ({ onSuccess }) => {
-  // All classes available for document upload (same as Payment form)
-  const allClasses = [
-    { id: "class1", name: "Class 1", fee: 400 },
-    { id: "class2", name: "Class 2", fee: 400 },
-    { id: "class3", name: "Class 3", fee: 400 },
-    { id: "class4", name: "Class 4", fee: 600 },
-    { id: "class5", name: "Class 5", fee: 600 },
-    { id: "class6", name: "Class 6", fee: 600 },
-    { id: "class7", name: "Class 7", fee: 800 },
-    { id: "class8", name: "Class 8", fee: 800 },
-    { id: "class9", name: "Class 9", fee: 1000 },
-    { id: "class10", name: "Class 10", fee: 1000 },
-    { id: "class11_science", name: "Class 11 (Science)", fee: 1500 },
-    { id: "class12_science", name: "Class 12 (Science)", fee: 1500 },
-    { id: "class11_commerce", name: "Class 11 (Commerce)", fee: 1200 },
-    { id: "class12_commerce", name: "Class 12 (Commerce)", fee: 1200 },
-    { id: "competition", name: "Competition", fee: 1000 },
-  ]
+  const [allClasses, setAllClasses] = useState([])
+
+  useEffect(() => {
+    fetchCourses()
+  }, [])
+
+  const fetchCourses = async () => {
+    try {
+      const response = await courseAPI.getAllCourses()
+      if (response.data.success) {
+        const mapped = response.data.courses
+          .filter(course => course.classType === 'course' && course.status === 'active')
+          .map(course => {
+            const feeString = course.fee || '0';
+            const firstPart = feeString.split('-')[0];
+            const cleanFee = firstPart.replace(/[^0-9.]/g, '');
+            const parsedFee = parseFloat(cleanFee) || 0;
+            return {
+              id: course.name,
+              name: course.name,
+              fee: parsedFee,
+              category: course.category
+            };
+          });
+        setAllClasses(mapped)
+      }
+    } catch (error) {
+      console.error('Error fetching courses:', error)
+    }
+  }
 
   const [formData, setFormData] = useState({
     classId: '',
@@ -123,15 +135,15 @@ const UploadDocument = ({ onSuccess }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-8 border-t-4 border-gradient-to-r from-red-600 to-purple-900">
+    <div className="bg-white rounded-lg shadow-lg p-8 border-t-4 border-gradient-to-r from-blue-600 to-blue-900">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
         <span className="text-3xl mr-3">📤</span>
         Upload PDF Document
       </h2>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-800 flex items-center">
+        <div className="mb-4 p-4 bg-red-50 border border-blue-200 rounded-lg">
+          <p className="text-blue-800 flex items-center">
             <span className="text-xl mr-2">⚠️</span>
             {error}
           </p>
@@ -162,44 +174,23 @@ const UploadDocument = ({ onSuccess }) => {
           >
             <option value="">-- Select a Class --</option>
             
-            {/* Primary Classes (1-5) */}
-            <optgroup label="Primary School (Classes 1-5)">
-              <option value="class1">Class 1</option>
-              <option value="class2">Class 2</option>
-              <option value="class3">Class 3</option>
-              <option value="class4">Class 4</option>
-              <option value="class5">Class 5</option>
-            </optgroup>
-            
-            {/* Middle School (6-8) */}
-            <optgroup label="Middle School (Classes 6-8)">
-              <option value="class6">Class 6</option>
-              <option value="class7">Class 7</option>
-              <option value="class8">Class 8</option>
-            </optgroup>
-            
-            {/* High School (9-10) */}
-            <optgroup label="High School (Classes 9-10)">
-              <option value="class9">Class 9</option>
-              <option value="class10">Class 10</option>
-            </optgroup>
-            
-            {/* Senior Secondary - Science */}
-            <optgroup label="Senior Secondary (Science)">
-              <option value="class11_science">Class 11 (Science)</option>
-              <option value="class12_science">Class 12 (Science)</option>
-            </optgroup>
-            
-            {/* Senior Secondary - Commerce */}
-            <optgroup label="Senior Secondary (Commerce)">
-              <option value="class11_commerce">Class 11 (Commerce)</option>
-              <option value="class12_commerce">Class 12 (Commerce)</option>
-            </optgroup>
-            
-            {/* Competitive Exams */}
-            <optgroup label="Competitive Exams">
-              <option value="competition">Competition</option>
-            </optgroup>
+            {/* Dynamic Categories */}
+            {Object.entries(
+              allClasses.reduce((acc, cls) => {
+                const cat = cls.category || 'General';
+                if (!acc[cat]) acc[cat] = [];
+                acc[cat].push(cls);
+                return acc;
+              }, {})
+            ).map(([category, items]) => (
+              <optgroup key={category} label={category}>
+                {items.map(cls => (
+                  <option key={cls.id} value={cls.id}>
+                    {cls.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
           </select>
         </div>
 
@@ -265,7 +256,7 @@ const UploadDocument = ({ onSuccess }) => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full px-6 py-3 bg-gradient-to-r from-red-600 to-purple-900 text-white rounded-lg hover:shadow-lg font-semibold transition-all duration-300 disabled:opacity-50"
+          className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-900 text-white rounded-lg hover:shadow-lg font-semibold transition-all duration-300 disabled:opacity-50"
         >
           {loading ? (
             <span className="flex items-center justify-center">

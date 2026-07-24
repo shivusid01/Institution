@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { paymentAPI } from "../../services/api";
+import { paymentAPI, courseAPI } from "../../services/api";
 import { useNavigate } from "react-router-dom";
 
 const StudentPayment = () => {
@@ -21,25 +21,38 @@ const StudentPayment = () => {
   // ✅ RAZORPAY TEST KEY (Use this directly)
   const RAZORPAY_KEY_ID = "rzp_test_Ryi7BVfi7WxpnU";
 
-  // ✅ INDIVIDUAL CLASSES WITH FIXED FEES
-  const individualClasses = [
-    { id: "class1", name: "Class 1", fee: 400 },
-    { id: "class2", name: "Class 2", fee: 400 },
-    { id: "class3", name: "Class 3", fee: 400 },
-    { id: "class4", name: "Class 4", fee: 600 },
-    { id: "class5", name: "Class 5", fee: 600 },
-    { id: "class6", name: "Class 6", fee: 600 },
-    { id: "class7", name: "Class 7", fee: 800 },
-    { id: "class8", name: "Class 8", fee: 800 },
-    { id: "class9", name: "Class 9", fee: 1000 },
-    { id: "class10", name: "Class 10", fee: 1000 },
-    { id: "class11_science", name: "Class 11 (Science)", fee: 1500 },
-    { id: "class12_science", name: "Class 12 (Science)", fee: 1500 },
-    { id: "class11_commerce", name: "Class 11 (Commerce)", fee: 1200 },
-    { id: "class12_commerce", name: "Class 12 (Commerce)", fee: 1200 },
-    { id: "competition", name: "Competition", fee: 1000 },
-    
-  ];
+  // ✅ INDIVIDUAL CLASSES WITH DYNAMIC FEES
+  const [individualClasses, setIndividualClasses] = useState([]);
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      const response = await courseAPI.getAllCourses();
+      if (response.data.success) {
+        const activeCourses = response.data.courses
+          .filter(course => course.classType === 'course' && course.status === 'active')
+          .map(course => {
+            const feeString = course.fee || '0';
+            const firstPart = feeString.split('-')[0];
+            const cleanFee = firstPart.replace(/[^0-9.]/g, '');
+            const parsedFee = parseFloat(cleanFee) || 0;
+            return {
+              id: course.name,
+              name: course.name,
+              fee: parsedFee,
+              feeDisplay: course.fee,
+              category: course.category
+            };
+          });
+        setIndividualClasses(activeCourses);
+      }
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  };
 
   const months = [
     "January", "February", "March", "April", "May", "June",
@@ -68,7 +81,7 @@ const StudentPayment = () => {
     } else {
       setAmount(0);
     }
-  }, [selectedClass]);
+  }, [selectedClass, individualClasses]);
 
   // Load Razorpay script dynamically
   const loadRazorpayScript = () => {
@@ -118,7 +131,7 @@ const StudentPayment = () => {
       }
 
       const selectedClassObj = individualClasses.find(cls => cls.id === selectedClass);
-      const finalDescription = `${selectedClassObj.name} - ${selectedMonth} ${new Date().getFullYear()} Monthly Fees`;
+      const finalDescription = `${selectedClassObj?.name || selectedClass} - ${selectedMonth} ${new Date().getFullYear()} Monthly Fees`;
 
       setIsLoading(true);
       
@@ -126,7 +139,7 @@ const StudentPayment = () => {
         amount: amount,
         description: finalDescription,
         month: selectedMonth,
-        class: selectedClassObj.name,
+        class: selectedClassObj?.name || selectedClass,
         studentName: studentName.trim(),
         studentId: currentUser?.id,
         enrollmentId: currentUser?.enrollmentId
@@ -173,7 +186,7 @@ const StudentPayment = () => {
       }
 
       const selectedClassObj = individualClasses.find(cls => cls.id === selectedClass);
-      const description = `${selectedClassObj.name} - ${selectedMonth} Monthly Fee`;
+      const description = `${selectedClassObj?.name || selectedClass} - ${selectedMonth} Monthly Fee`;
 
       // ✅ FIXED: Use RAZORPAY_KEY_ID directly instead of process.env
       const options = {
@@ -302,7 +315,7 @@ const StudentPayment = () => {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+            <div className="mb-4 p-3 bg-red-50 border border-blue-200 text-red-700 rounded-lg">
               <span className="mr-2">❌</span>
               {error}
             </div>
@@ -342,46 +355,23 @@ const StudentPayment = () => {
                   >
                     <option value="">-- Select Class --</option>
                     
-                    {/* Primary Classes (1-5) */}
-                    <optgroup label="Primary School">
-                      <option value="class1">Class 1 - ₹400/month</option>
-                      <option value="class2">Class 2 - ₹400/month</option>
-                      <option value="class3">Class 3 - ₹400/month</option>
-                      <option value="class4">Class 4 - ₹600/month</option>
-                      <option value="class5">Class 5 - ₹600/month</option>
-                    </optgroup>
-                    
-                    {/* Middle School (6-8) */}
-                    <optgroup label="Middle School">
-                      <option value="class6">Class 6 - ₹600/month</option>
-                      <option value="class7">Class 7 - ₹800/month</option>
-                      <option value="class8">Class 8 - ₹800/month</option>
-                    </optgroup>
-                    
-                    {/* High School (9-10) */}
-                    <optgroup label="High School">
-                      <option value="class9">Class 9 - ₹1,000/month</option>
-                      <option value="class10">Class 10 - ₹1,000/month</option>
-                    </optgroup>
-                    
-                    {/* Senior Secondary - Science */}
-                    {/* <optgroup label="Senior Secondary (Science)">
-                      <option value="class11_science">Class 11 (Science) - ₹1,500/month</option>
-                      <option value="class12_science">Class 12 (Science) - ₹1,500/month</option>
-                    </optgroup> */}
-                    
-                    {/* Senior Secondary - Commerce */}
-                    <optgroup label="Senior Secondary (Commerce)">
-                      <option value="class11_commerce">Class 11 (Commerce) - ₹1,200/month</option>
-                      <option value="class12_commerce">Class 12 (Commerce) - ₹1,200/month</option>
-                    </optgroup>
-                    
-                    {/* Competitive Exams */}
-                    <optgroup label="Competitive Exams">
-                      <option value="competition">Competition - ₹1,000/month</option>
-                      {/* <option value="neet_prep">NEET Preparation - ₹2,000/month</option>
-                      <option value="upsc_foundation">UPSC Foundation - ₹1,800/month</option> */}
-                    </optgroup>
+                    {/* Dynamic Categories */}
+                    {Object.entries(
+                      individualClasses.reduce((acc, cls) => {
+                        const cat = cls.category || 'General';
+                        if (!acc[cat]) acc[cat] = [];
+                        acc[cat].push(cls);
+                        return acc;
+                      }, {})
+                    ).map(([category, items]) => (
+                      <optgroup key={category} label={category}>
+                        {items.map(cls => (
+                          <option key={cls.id} value={cls.id}>
+                            {cls.name} - {cls.feeDisplay || `₹${cls.fee}`}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3">
                     <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -628,10 +618,10 @@ const StudentPayment = () => {
                 </div>
               </div>
               <div className="flex items-start">
-                <span className="text-purple-500 mr-2 text-lg">📞</span>
+                <span className="text-blue-500 mr-2 text-lg">📞</span>
                 <div>
                   <p className="font-medium text-gray-900">Need Help?</p>
-                  <p className="text-gray-600">Call: 98765 43210</p>
+                  <p className="text-gray-600"> 9934522519 8226871265</p>
                 </div>
               </div>
             </div>

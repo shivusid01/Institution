@@ -181,20 +181,20 @@ const Contact = () => {
   // Loading Animation
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <div className="relative">
             <div
-              className="w-20 h-20 border-4 border-red-200 border-t-red-600 rounded-full mx-auto mb-6"
+              className="w-20 h-20 border-4 border-blue-200 border-t-red-600 rounded-full mx-auto mb-6"
             />
             <div
               className="absolute inset-0 flex items-center justify-center"
             >
-              <div className="w-8 h-8 bg-gradient-to-r from-red-600 to-purple-900 rounded-full"></div>
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-900 rounded-full"></div>
             </div>
           </div>
           <h2 
-            className="text-2xl font-bold bg-gradient-to-r from-red-600 to-purple-900 bg-clip-text text-transparent"
+            className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-900 bg-clip-text text-transparent"
           >
             Loading Sharma Institute...
           </h2>
@@ -209,7 +209,7 @@ const Contact = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-red-50 py-12 px-4 sm:px-6 lg:px-8 fade-in">
+    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 py-12 px-4 sm:px-6 lg:px-8 fade-in">
       <div className="max-w-7xl mx-auto">
         {/* Contact Form - Big on Top */}
         <div 
@@ -218,11 +218,11 @@ const Contact = () => {
           <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
             <div className="flex items-center mb-8">
               <div 
-                className="p-3 bg-gradient-to-r from-red-100 to-purple-100 rounded-lg mr-4"
+                className="p-3 bg-gradient-to-r from-blue-100 to-blue-100 rounded-lg mr-4"
               >
                 <span className="text-2xl">✍️</span>
               </div>
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-red-600 to-purple-900 bg-clip-text text-transparent">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-900 bg-clip-text text-transparent">
                 Send us a Message
               </h2>
             </div>
@@ -231,7 +231,7 @@ const Contact = () => {
             
               {error && (
                 <div 
-                  className="mb-6 p-4 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-lg"
+                  className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg"
                 >
                   <div className="flex items-center">
                     <svg 
@@ -241,7 +241,7 @@ const Contact = () => {
                     >
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                     </svg>
-                    <span className="text-red-800 font-medium">{error}</span>
+                    <span className="text-blue-800 font-medium">{error}</span>
                   </div>
                 </div>
               )}
@@ -297,7 +297,7 @@ const Contact = () => {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full px-5 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all duration-300 hover:border-purple-300"
+                      className="w-full px-5 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 hover:border-blue-300"
                       placeholder="Enter your email"
                     />
                   </div>
@@ -328,7 +328,7 @@ const Contact = () => {
                       name="course"
                       value={formData.course}
                       onChange={handleChange}
-                      className="w-full px-5 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all duration-300 hover:border-purple-300"
+                      className="w-full px-5 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 hover:border-blue-300"
                     >
                       {courses.map((course) => (
                         <option key={course.value} value={course.value}>
@@ -363,10 +363,10 @@ const Contact = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-5 px-6 bg-gradient-to-r from-red-600 to-purple-900 text-white font-bold rounded-xl hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group overflow-hidden relative"
+                    className="w-full py-5 px-6 bg-gradient-to-r from-blue-600 to-blue-900 text-white font-bold rounded-xl hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center group overflow-hidden relative"
                   >
                     <div
-                      className="absolute inset-0 bg-gradient-to-r from-purple-900 to-red-600"
+                      className="absolute inset-0 bg-gradient-to-r from-blue-900 to-blue-600"
                     />
                     <span className="relative z-10 flex items-center">
                       {isSubmitting ? (
@@ -412,12 +412,12 @@ const Contact = () => {
           className="text-center mb-16"
         >
           <div 
-            className="inline-flex items-center justify-center p-4 bg-gradient-to-r from-red-100 to-purple-100 rounded-full mb-6 shadow-lg"
+            className="inline-flex items-center justify-center p-4 bg-gradient-to-r from-blue-100 to-blue-100 rounded-full mb-6 shadow-lg"
           >
             <span className="text-4xl">📞</span>
           </div>
           <h1 
-            className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-red-600 via-purple-600 to-purple-900 bg-clip-text text-transparent"
+            className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-blue-600 to-blue-900 bg-clip-text text-transparent"
           >
             Get in Touch With Us
           </h1>
@@ -461,11 +461,11 @@ const Contact = () => {
                   href={info.action.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="relative inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-600 to-purple-900 text-white font-medium rounded-lg hover:shadow-lg transition-all duration-300 overflow-hidden group"
+                  className="relative inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-900 text-white font-medium rounded-lg hover:shadow-lg transition-all duration-300 overflow-hidden group"
                 >
                   <span className="relative z-10">{info.action.text}</span>
                   <div 
-                    className="absolute inset-0 bg-gradient-to-r from-purple-900 to-red-600"
+                    className="absolute inset-0 bg-gradient-to-r from-blue-900 to-blue-600"
                   />
                   <svg 
                     className="w-4 h-4 ml-2 relative z-10"
@@ -488,20 +488,20 @@ const Contact = () => {
           >
             <div className="flex items-center mb-8">
               <div 
-                className="p-3 bg-gradient-to-r from-red-100 to-purple-100 rounded-lg mr-4"
+                className="p-3 bg-gradient-to-r from-blue-100 to-blue-100 rounded-lg mr-4"
               >
                 <span className="text-2xl">🗺️</span>
               </div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-purple-900 bg-clip-text text-transparent">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-900 bg-clip-text text-transparent">
                 Find Our Main Campus
               </h2>
             </div>
-            <div className="relative bg-gradient-to-br from-red-50 to-purple-50 h-64 rounded-xl flex flex-col items-center justify-center mb-6 overflow-hidden">
+            <div className="relative bg-gradient-to-br from-blue-50 to-blue-50 h-64 rounded-xl flex flex-col items-center justify-center mb-6 overflow-hidden">
               {/* Floating particles */}
               {[...Array(15)].map((_, i) => (
                 <div
                   key={i}
-                  className="absolute w-1 h-1 bg-gradient-to-r from-red-300 to-purple-300 rounded-full"
+                  className="absolute w-1 h-1 bg-gradient-to-r from-blue-300 to-blue-300 rounded-full"
                   style={{
                     left: `${Math.random() * 100}%`,
                     top: `${Math.random() * 100}%`,
@@ -524,8 +524,10 @@ const Contact = () => {
                 rel="noopener noreferrer"
                 className="relative inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white font-medium rounded-lg hover:shadow-xl transition-all duration-300 overflow-hidden group"
               >
-                <span className="mr-3">🚗</span>
-                Get Directions on Google Maps
+                <span className="relative z-10 flex items-center">
+                  <span className="mr-3">🚗</span>
+                  Get Directions on Google Maps
+                </span>
                 <div 
                   className="absolute inset-0 bg-gradient-to-r from-gray-900 to-gray-800"
                 />
@@ -539,21 +541,21 @@ const Contact = () => {
           >
             <div className="flex items-center mb-8">
               <div 
-                className="p-3 bg-gradient-to-r from-purple-100 to-red-100 rounded-lg mr-4"
+                className="p-3 bg-gradient-to-r from-blue-100 to-blue-100 rounded-lg mr-4"
               >
                 <span className="text-2xl">🕒</span>
               </div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-red-600 bg-clip-text text-transparent">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-transparent">
                 Business Hours
               </h2>
             </div>
             <div className="space-y-6">
               {[
-                { day: 'Monday - Friday', time: '9:00 AM - 7:00 PM', icon: '🏢', color: 'from-red-50 to-red-100' },
-                { day: 'Saturday', time: '9:00 AM - 5:00 PM', icon: '📚', color: 'from-purple-50 to-purple-100' },
-                { day: 'Sunday', time: '10:00 AM - 2:00 PM', icon: '☕', color: 'from-red-50 to-purple-50' },
-                { day: 'Admission Office', time: 'Open 24/7 Online', icon: '🌐', color: 'from-purple-50 to-red-50' },
-                { day: 'Emergency Support', time: '24/7 Available', icon: '🚨', color: 'from-red-100 to-purple-100' }
+                { day: 'Monday - Friday', time: '9:00 AM - 7:00 PM', icon: '🏢', color: 'from-blue-50 to-blue-100' },
+                { day: 'Saturday', time: '9:00 AM - 5:00 PM', icon: '📚', color: 'from-blue-50 to-blue-100' },
+                { day: 'Sunday', time: '10:00 AM - 2:00 PM', icon: '☕', color: 'from-blue-50 to-blue-50' },
+                { day: 'Admission Office', time: 'Open 24/7 Online', icon: '🌐', color: 'from-blue-50 to-blue-50' },
+                { day: 'Emergency Support', time: '24/7 Available', icon: '🚨', color: 'from-blue-100 to-blue-100' }
               ].map((hour, index) => (
                 <div 
                   key={index}
@@ -573,7 +575,7 @@ const Contact = () => {
                     <span className="font-bold text-gray-900">{hour.day}</span>
                   </div>
                   <span 
-                    className="px-4 py-2 bg-gradient-to-r from-red-600 to-purple-900 text-white font-semibold rounded-lg shadow-md"
+                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-900 text-white font-semibold rounded-lg shadow-md"
                   >
                     {hour.time}
                   </span>
@@ -600,15 +602,15 @@ const Contact = () => {
 
         {/* Quick Response Info */}
         <div 
-          className="mt-16 bg-gradient-to-r from-red-50 to-purple-50 border border-red-200 rounded-2xl p-8 shadow-lg"
+          className="mt-16 bg-gradient-to-r from-blue-50 to-blue-50 border border-blue-200 rounded-2xl p-8 shadow-lg"
         >
           <div className="flex items-center mb-6">
             <div 
-              className="p-3 bg-gradient-to-r from-red-100 to-purple-100 rounded-lg mr-4"
+              className="p-3 bg-gradient-to-r from-blue-100 to-blue-100 rounded-lg mr-4"
             >
               <span className="text-red-600 text-xl">⚡</span>
             </div>
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-purple-900 bg-clip-text text-transparent">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-900 bg-clip-text text-transparent">
               Quick Response Guarantee
             </h3>
           </div>
@@ -641,7 +643,7 @@ const Contact = () => {
       >
         <a
           href="tel:+918226871265"
-          className="bg-gradient-to-r from-red-600 to-purple-900 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl flex items-center gap-2 group"
+          className="bg-gradient-to-r from-blue-600 to-blue-900 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl flex items-center gap-2 group"
         >
           <span>📞 Call Now</span>
           <svg

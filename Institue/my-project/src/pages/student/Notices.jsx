@@ -342,13 +342,13 @@ const StudentNotices = () => {
                                 {notice.title}
                               </h3>
                               {notice.isImportant && (
-                                <span className="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
+                                <span className="inline-flex items-center px-3 py-1 bg-red-100 text-blue-800 rounded-full text-sm font-medium">
                                   ⚠️ Important
                                 </span>
                               )}
                               <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                                 notice.priority === 'high'
-                                  ? 'bg-red-100 text-red-800'
+                                  ? 'bg-red-100 text-blue-800'
                                   : notice.priority === 'medium'
                                   ? 'bg-yellow-100 text-yellow-800'
                                   : 'bg-green-100 text-green-800'
@@ -372,10 +372,10 @@ const StudentNotices = () => {
                                   year: 'numeric'
                                 })}
                               </span>
-                              {notice.publishedBy?.name && (
+                              {(notice.instructor || notice.publishedBy?.name) && (
                                 <span className="flex items-center text-sm text-gray-600">
                                   <span className="mr-2">👤</span>
-                                  {notice.publishedBy.name}
+                                  {notice.instructor || notice.publishedBy.name}
                                 </span>
                               )}
                             </div>
@@ -467,16 +467,16 @@ const StudentNotices = () => {
                   .filter(notice => notice.isImportant)
                   .slice(0, 4)
                   .map((notice) => (
-                    <div key={notice._id} className="p-4 border border-red-200 bg-red-50 rounded-lg">
-                      <h4 className="font-bold text-red-900 mb-2">{notice.title}</h4>
-                      <p className="text-sm text-red-800 line-clamp-2">
+                    <div key={notice._id} className="p-4 border border-blue-200 bg-red-50 rounded-lg">
+                      <h4 className="font-bold text-blue-900 mb-2">{notice.title}</h4>
+                      <p className="text-sm text-blue-800 line-clamp-2">
                         {notice.content}
                       </p>
                       <div className="flex items-center justify-between mt-3">
                         <span className="text-xs text-red-700">
                           {new Date(notice.publishDate).toLocaleDateString()}
                         </span>
-                        <button className="text-xs text-red-700 hover:text-red-900 font-medium">
+                        <button className="text-xs text-red-700 hover:text-blue-900 font-medium">
                           Read More →
                         </button>
                       </div>

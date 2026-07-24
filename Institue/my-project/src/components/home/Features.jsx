@@ -57,7 +57,7 @@ const Features = () => {
           {features.map((feature, index) => (
             <div 
               key={index}
-              className="card hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-red-200 bg-gradient-to-b from-white to-gray-50"
+              className="card hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-200 bg-gradient-to-b from-white to-gray-50"
             >
               <div className="flex flex-col items-center text-center p-6">
                 <div 
@@ -65,7 +65,7 @@ const Features = () => {
                 >
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3 hover:bg-gradient-to-r hover:from-red-600 hover:to-purple-900 hover:bg-clip-text hover:text-transparent transition-all duration-300">
+                <h3 className="text-xl font-bold text-gray-900 mb-3 hover:bg-gradient-to-r hover:from-blue-600 hover:to-blue-900 hover:bg-clip-text hover:text-transparent transition-all duration-300">
                   {feature.title}
                 </h3>
                 <p className="text-gray-600">{feature.description}</p>

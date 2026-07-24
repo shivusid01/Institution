@@ -17,7 +17,13 @@ const {
   uploadProfileImage,
   forgotPassword,
   resetPassword,
-  verifyEmail
+  verifyEmail,
+  googleLogin,
+  sendOTP,
+  resetPasswordOTP,
+  sendLoginOTP,
+  verifyLoginOTP,
+  completeOTPRegistration
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -178,6 +184,12 @@ router.post('/login', loginValidation, login);
 router.post('/forgotpassword', forgotPasswordValidation, forgotPassword);
 router.put('/resetpassword/:resettoken', resetPasswordValidation, resetPassword);
 router.get('/verifyemail/:token', verifyEmail);
+router.post('/google-login', googleLogin);
+router.post('/send-otp', sendOTP);
+router.post('/reset-password-otp', resetPasswordOTP);
+router.post('/send-login-otp', sendLoginOTP);
+router.post('/verify-login-otp', verifyLoginOTP);
+router.post('/complete-otp-registration', completeOTPRegistration);
 
 // Protected routes
 router.get('/logout', protect, logout);

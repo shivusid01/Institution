@@ -13,27 +13,34 @@ const courseSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    required: [true, 'Category is required'],
-      enum: [
-      'Engineering', 
-      'Medical', 
-      'Civil Services', 
-      'School', 
-      'Science',         // Add Science
-      'Commerce',        // Add Commerce
-      'All Classes',     // Add All Classes
-      'General'
-    ]
+    required: [true, 'Category is required']
   },
-  // fee: {
-  //   type: Number,
-  //   required: [true, 'Fee is required'],
-  //   min: 0
-  // },
-  // duration: {
-  //   type: String,
-  //   required: [true, 'Duration is required']
-  // },
+  fee: {
+    type: String,
+    default: ''
+  },
+  duration: {
+    type: String,
+    default: ''
+  },
+  language: {
+    type: String,
+    enum: ['Hindi', 'English'],
+    default: 'Hindi'
+  },
+  tag: {
+    type: String,
+    default: ''
+  },
+  classType: {
+    type: String,
+    enum: ['live_class', 'course'],
+    default: 'course'
+  },
+  syllabusUrl: {
+    type: String,
+    default: ''
+  },
   instructor: {
     type: String,
     required: [true, 'Instructor is required']
@@ -43,8 +50,7 @@ const courseSchema = new mongoose.Schema({
     ref: 'User'
   },
   subjects: [{
-    type: String,
-    required: true
+    type: String
   }],
   features: [{
     type: String

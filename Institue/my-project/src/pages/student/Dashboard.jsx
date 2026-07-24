@@ -141,10 +141,10 @@ const StudentDashboard = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {liveClasses.map((classItem) => (
-              <div key={classItem._id} className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-xl p-6 shadow-lg">
+              <div key={classItem._id} className="bg-gradient-to-r from-blue-50 to-orange-50 border-2 border-blue-200 rounded-xl p-6 shadow-lg">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 animate-pulse">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-blue-800 animate-pulse">
                       🎥 LIVE NOW
                     </span>
                     <h3 className="text-xl font-bold text-gray-900 mt-2">{classItem.subject}</h3>
@@ -254,7 +254,7 @@ const StudentDashboard = () => {
           <div className="flex items-center">
             <h2 className="text-xl font-bold text-gray-900">Recent Notices</h2>
             {unreadCount > 0 && (
-              <span className="ml-3 px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+              <span className="ml-3 px-2 py-1 bg-red-100 text-blue-800 text-xs font-medium rounded-full">
                 {unreadCount} new
               </span>
             )}
@@ -287,7 +287,7 @@ const StudentDashboard = () => {
                             {notice.title}
                           </h3>
                           {notice.isImportant && (
-                            <span className="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
+                            <span className="inline-flex items-center px-3 py-1 bg-red-100 text-blue-800 rounded-full text-sm font-medium">
                               ⚠️ Important
                             </span>
                           )}
@@ -336,10 +336,10 @@ const StudentDashboard = () => {
                 {/* Footer */}
                 <div className="flex justify-between items-center pt-4 border-t border-gray-200">
                   <div className="text-sm text-gray-500">
-                    {notice.publishedBy?.name && (
+                    {(notice.instructor || notice.publishedBy?.name) && (
                       <div>
                         <span className="font-medium">Posted by: </span>
-                        {notice.publishedBy.name}
+                        {notice.instructor || notice.publishedBy.name}
                       </div>
                     )}
                   </div>
@@ -393,7 +393,7 @@ const StudentDashboard = () => {
         
         <Link 
           to="/student/profile" 
-          className="flex flex-col items-center justify-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+          className="flex flex-col items-center justify-center p-4 bg-blue-50/50 rounded-lg hover:bg-blue-100 transition-colors"
         >
           <span className="text-3xl mb-2">👤</span>
           <span className="font-medium">Profile</span>

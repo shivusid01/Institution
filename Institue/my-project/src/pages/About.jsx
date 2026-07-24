@@ -7,7 +7,7 @@ const About = () => {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate loading for animations
+   
     const timer = setTimeout(() => {
       setIsLoading(false)
     }, 800)
@@ -85,20 +85,20 @@ const About = () => {
   // Loading Animation
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <div className="relative">
             <div
-              className="w-20 h-20 border-4 border-red-200 border-t-red-600 rounded-full mx-auto mb-6"
+              className="w-20 h-20 border-4 border-blue-200 border-t-red-600 rounded-full mx-auto mb-6"
             />
             <div
               className="absolute inset-0 flex items-center justify-center"
             >
-              <div className="w-8 h-8 bg-gradient-to-r from-red-600 to-purple-600 rounded-full"></div>
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-600 rounded-full"></div>
             </div>
           </div>
           <h2 
-            className="text-2xl font-bold bg-gradient-to-r from-red-600 to-purple-600 bg-clip-text text-transparent"
+            className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-600 bg-clip-text text-transparent"
           >
             Loading Sharma Institute...
           </h2>
@@ -113,13 +113,13 @@ const About = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12 bg-gradient-to-b from-white to-red-50 fade-in">
+    <div className="container mx-auto px-4 py-12 bg-gradient-to-b from-white to-blue-50 fade-in">
       {/* Hero Section with Animation */}
       <div 
         className="text-center mb-16"
       >
         <h1 
-          className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-red-600 via-purple-600 to-purple-900 bg-clip-text text-transparent"
+          className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-blue-600 to-blue-900 bg-clip-text text-transparent"
         >
           About Sharma Institute
         </h1>
@@ -136,14 +136,14 @@ const About = () => {
           {stats.map((stat, index) => (
             <div 
               key={index}
-              className="bg-white rounded-xl p-6 shadow-lg border border-red-100 hover:border-purple-200"
+              className="bg-white rounded-xl p-6 shadow-lg border border-blue-100 hover:border-blue-200"
             >
               <div 
                 className="text-3xl mb-2"
               >
                 {stat.icon}
               </div>
-              <div className="text-3xl font-bold bg-gradient-to-r from-red-600 to-purple-600 bg-clip-text text-transparent mb-1">
+              <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-600 bg-clip-text text-transparent mb-1">
                 {stat.number}
               </div>
               <div className="text-gray-600">{stat.label}</div>
@@ -157,7 +157,7 @@ const About = () => {
         className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20"
       >
         <div 
-          className="card bg-gradient-to-br from-red-50 to-white rounded-2xl p-8 shadow-lg border border-red-100"
+          className="card bg-gradient-to-br from-blue-50 to-white rounded-2xl p-8 shadow-lg border border-blue-100"
         >
           <div 
             className="text-4xl mb-4"
@@ -187,7 +187,7 @@ const About = () => {
         </div>
 
         <div 
-          className="card bg-gradient-to-br from-purple-50 to-white rounded-2xl p-8 shadow-lg border border-purple-100"
+          className="card bg-gradient-to-br from-blue-50 to-white rounded-2xl p-8 shadow-lg border border-blue-100"
         >
           <div 
             className="text-4xl mb-4"
@@ -206,7 +206,7 @@ const About = () => {
                 className="flex items-center text-gray-700"
               >
                 <span 
-                  className="text-purple-500 mr-3 text-xl"
+                  className="text-blue-500 mr-3 text-xl"
                 >
                   →
                 </span>
@@ -220,14 +220,14 @@ const About = () => {
       {/* Timeline with Animation */}
       <div className="mb-20">
         <h2 
-          className="text-3xl font-bold text-gray-900 text-center mb-12 bg-gradient-to-r from-red-600 to-purple-900 bg-clip-text text-transparent"
+          className="text-3xl font-bold text-gray-900 text-center mb-12 bg-gradient-to-r from-blue-600 to-blue-900 bg-clip-text text-transparent"
         >
           Our Journey
         </h2>
         <div className="relative">
           {/* Animated Timeline line */}
           <div 
-            className="hidden md:block absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-red-500 via-purple-500 to-purple-900"
+            className="hidden md:block absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-gradient-to-b from-blue-500 via-blue-500 to-blue-900"
           />
           
           {/* Timeline items */}
@@ -239,13 +239,13 @@ const About = () => {
               >
                 {/* Animated Timeline dot */}
                 <div 
-                  className="absolute left-1/2 transform -translate-x-1/2 md:left-1/2 z-10 h-6 w-6 rounded-full bg-gradient-to-r from-red-600 to-purple-900 shadow-lg"
+                  className="absolute left-1/2 transform -translate-x-1/2 md:left-1/2 z-10 h-6 w-6 rounded-full bg-gradient-to-r from-blue-600 to-blue-900 shadow-lg"
                 />
                 
                 {/* Content */}
                 <div className={`md:w-1/2 ${index % 2 === 0 ? 'md:pr-12 md:text-right' : 'md:pl-12'}`}>
                   <div 
-                    className="card bg-white inline-block max-w-md shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100 hover:border-red-200"
+                    className="card bg-white inline-block max-w-md shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100 hover:border-blue-200"
                   >
                     <div className="flex items-center mb-3">
                       <div 
@@ -253,7 +253,7 @@ const About = () => {
                       >
                         {item.icon}
                       </div>
-                      <div className="text-xl font-bold bg-gradient-to-r from-red-600 to-purple-900 bg-clip-text text-transparent">
+                      <div className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-900 bg-clip-text text-transparent">
                         {item.year}
                       </div>
                     </div>
@@ -275,7 +275,7 @@ const About = () => {
         <div 
           className="text-center mb-12"
         >
-          <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-red-600 to-purple-900 bg-clip-text text-transparent">
+          <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-blue-900 bg-clip-text text-transparent">
             Meet Our Leadership
           </h2>
           <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
@@ -290,7 +290,7 @@ const About = () => {
                 onClick={() => setActiveFilter(category.value)}
                 className={`px-5 py-2.5 rounded-full font-medium transition-all duration-300 ${
                   activeFilter === category.value
-                    ? 'bg-gradient-to-r from-red-600 to-purple-900 text-white shadow-lg shadow-purple-200'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-900 text-white shadow-lg shadow-blue-200'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -312,22 +312,22 @@ const About = () => {
             {filteredTeam.map((member, index) => (
               <div 
                 key={index}
-                className="card bg-gradient-to-b from-white to-red-50 rounded-2xl p-6 text-center shadow-lg border border-gray-100 hover:border-red-200 group overflow-hidden"
+                className="card bg-gradient-to-b from-white to-blue-50 rounded-2xl p-6 text-center shadow-lg border border-gray-100 hover:border-blue-200 group overflow-hidden"
                 layout
               >
                 {/* Avatar with Animation */}
                 <div 
-                  className="relative h-28 w-28 rounded-full bg-gradient-to-r from-red-600 to-purple-900 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 overflow-hidden"
+                  className="relative h-28 w-28 rounded-full bg-gradient-to-r from-blue-600 to-blue-900 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 overflow-hidden"
                 >
                   <span className="text-3xl font-bold text-white relative z-10">{member.avatar}</span>
                   <div 
-                    className="absolute inset-0 bg-gradient-to-r from-purple-900 to-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    className="absolute inset-0 bg-gradient-to-r from-blue-900 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                   />
                 </div>
                 
                 {/* Name and Role */}
                 <h3 
-                  className="text-xl font-bold text-gray-900 mb-2 group-hover:bg-gradient-to-r group-hover:from-red-600 group-hover:to-purple-900 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300"
+                  className="text-xl font-bold text-gray-900 mb-2 group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-blue-900 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300"
                 >
                   {member.name}
                 </h3>
@@ -348,7 +348,7 @@ const About = () => {
                     {member.achievements.map((achievement, idx) => (
                       <span 
                         key={idx} 
-                        className="px-2 py-1 bg-gradient-to-r from-red-50 to-purple-50 text-red-600 text-xs rounded border border-red-100"
+                        className="px-2 py-1 bg-gradient-to-r from-blue-50 to-blue-50 text-red-600 text-xs rounded border border-blue-100"
                       >
                         {achievement}
                       </span>
@@ -367,12 +367,12 @@ const About = () => {
       >
         {/* Gradient Background with Animation */}
         <div 
-          className="absolute inset-0 bg-gradient-to-r from-red-600 via-purple-600 to-purple-900"
+          className="absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-600 to-blue-900"
         />
         
         {/* Animated Overlay */}
         <div 
-          className="absolute inset-0 bg-gradient-to-r from-red-600/0 via-white/10 to-purple-900/0"
+          className="absolute inset-0 bg-gradient-to-r from-blue-600/0 via-white/10 to-blue-900/0"
         />
         
         {/* Floating Particles */}
@@ -394,13 +394,13 @@ const About = () => {
             Ready to Start Your Journey?
           </h2>
           <p 
-            className="mb-6 text-red-100 max-w-2xl mx-auto"
+            className="mb-6 text-blue-100 max-w-2xl mx-auto"
           >
             Join thousands of successful students who transformed their education and careers with our guidance.
           </p>
           <div
           >
-            <Link to="/signup" className="relative inline-flex items-center gap-2 bg-white text-red-600 hover:text-purple-900 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 overflow-hidden group">
+            <Link to="/signup" className="relative inline-flex items-center gap-2 bg-white text-red-600 hover:text-blue-900 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 overflow-hidden group">
               <span 
                 className="relative z-10"
               >
@@ -415,7 +415,7 @@ const About = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
               <div 
-                className="absolute inset-0 bg-gradient-to-r from-red-50 to-purple-50"
+                className="absolute inset-0 bg-gradient-to-r from-blue-50 to-blue-50"
               />
             </Link>
           </div>
@@ -426,7 +426,7 @@ const About = () => {
       <div
         className="fixed bottom-8 right-8 z-50"
       >
-        <div className="bg-white rounded-full p-4 shadow-2xl border border-red-200 hover:border-purple-600 transition-colors duration-300">
+        <div className="bg-white rounded-full p-4 shadow-2xl border border-blue-200 hover:border-blue-600 transition-colors duration-300">
           <div className="flex items-center gap-3">
             <div 
               className="text-2xl"
@@ -434,7 +434,7 @@ const About = () => {
               ⭐
             </div>
             <div className="text-right">
-              <div className="font-bold bg-gradient-to-r from-red-600 to-purple-900 bg-clip-text text-transparent">
+              <div className="font-bold bg-gradient-to-r from-blue-600 to-blue-900 bg-clip-text text-transparent">
                 Rated 4.9/5
               </div>
               <div className="text-sm text-gray-600">by 2000+ students</div>

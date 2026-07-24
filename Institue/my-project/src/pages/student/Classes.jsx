@@ -179,7 +179,7 @@ const StudentClasses = () => {
                       
                       const statusConfig = {
                         'upcoming': { label: 'Upcoming', color: 'bg-blue-100 text-blue-800' },
-                        'live': { label: 'Live', color: 'bg-red-100 text-red-800' },
+                        'live': { label: 'Live', color: 'bg-red-100 text-blue-800' },
                         'completed': { label: 'Inactive', color: 'bg-gray-100 text-gray-800' }
                       }
                       
@@ -254,26 +254,7 @@ const StudentClasses = () => {
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="card">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
-            <div className="space-y-3">
-              {upcomingClasses.filter(c => c.status === 'live').length > 0 && (
-                <button 
-                  onClick={() => handleJoinClass(upcomingClasses.find(c => c.status === 'live'))}
-                  className="w-full btn-primary py-3"
-                >
-                  🎥 Join Live Class
-                </button>
-              )}
-              <button className="w-full btn-secondary py-3">
-                📚 Study Material
-              </button>
-              <button className="w-full btn-secondary py-3">
-                ❓ Ask Doubt
-              </button>
-            </div>
-          </div>
+
         </div>
       </div>
     </div>

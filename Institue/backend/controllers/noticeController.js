@@ -16,7 +16,8 @@ const createNotice = async (req, res) => {
       publishDate,
       expiryDate,
       isImportant,
-      attachments
+      attachments,
+      instructor
     } = req.body;
 
     // Create notice
@@ -28,6 +29,7 @@ const createNotice = async (req, res) => {
       target: target || 'all',
       targetClass: target === 'specific_class' ? targetClass : undefined,
       publishedBy: req.user._id,
+      instructor: instructor || '',
       status: 'published',
       publishDate: publishDate || new Date(),
       expiryDate,
@@ -311,7 +313,7 @@ const updateNotice = async (req, res) => {
     const updatableFields = [
       'title', 'content', 'category', 'priority', 'target',
       'targetClass', 'publishDate', 'expiryDate', 'isImportant',
-      'attachments', 'status'
+      'attachments', 'status', 'instructor'
     ];
     
     updatableFields.forEach(field => {

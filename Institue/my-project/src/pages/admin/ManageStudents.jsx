@@ -57,12 +57,16 @@ const ManageStudents = () => {
         setAvailableClasses(classes.sort())
         
         // Calculate stats
-        const activeCount = data.students.filter(s => s.status === 'active').length
+        const activeCount = data.stats?.activeCount ?? data.students.filter(s => s.status === 'active').length
+        const completedCount = data.stats?.completedCount ?? 0
+        const inactiveCount = data.stats?.inactiveCount ?? (data.total - activeCount)
         const pendingFeesCount = data.students.filter(s => s.totalPaid === 0).length
         
         setStats({
           totalStudents: data.total || 0,
           activeStudents: activeCount,
+          completedStudents: completedCount,
+          inactiveStudents: inactiveCount,
           totalRevenue: data.students.reduce((sum, s) => sum + (s.totalPaid || 0), 0),
           pendingFees: pendingFeesCount
         })
@@ -333,8 +337,8 @@ Institute Admin
   const statusOptions = [
     { value: 'all', label: 'All Students', count: totalStudents },
     { value: 'active', label: 'Active', count: stats.activeStudents },
-    { value: 'inactive', label: 'Inactive', count: totalStudents - stats.activeStudents },
-    { value: 'completed', label: 'Completed', color: 'purple' }
+    { value: 'inactive', label: 'Inactive', count: stats.inactiveStudents },
+    { value: 'completed', label: 'Completed', color: 'purple', count: stats.completedStudents }
   ]
 
   const classOptions = [
@@ -408,26 +412,26 @@ Institute Admin
           </div>
         </div>
 
-        <div className="bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 rounded-xl p-6 shadow-sm">
+        <div className="bg-gradient-to-r from-blue-50 to-violet-50 border border-blue-200 rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-purple-700 font-medium">Avg. Payment</p>
-              <p className="text-2xl font-bold text-purple-800 mt-1">
+              <p className="text-sm text-blue-700 font-medium">Avg. Payment</p>
+              <p className="text-2xl font-bold text-blue-800 mt-1">
                 {formatCurrency(stats.totalStudents > 0 ? Math.round(stats.totalRevenue / stats.totalStudents) : 0)}
               </p>
-              <p className="text-xs text-purple-600 mt-1">Per student</p>
+              <p className="text-xs text-blue-600 mt-1">Per student</p>
             </div>
-            <div className="p-3 rounded-full bg-purple-100 text-purple-600">
+            <div className="p-3 rounded-full bg-blue-100 text-blue-600">
               <span className="text-2xl">📊</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 rounded-xl p-6 shadow-sm">
+        <div className="bg-gradient-to-r from-blue-50 to-rose-50 border border-blue-200 rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-red-700 font-medium">Pending Fees</p>
-              <p className="text-2xl font-bold text-red-800 mt-1">{stats.pendingFees}</p>
+              <p className="text-2xl font-bold text-blue-800 mt-1">{stats.pendingFees}</p>
               <p className="text-xs text-red-600 mt-1">No payments yet</p>
             </div>
             <div className="p-3 rounded-full bg-red-100 text-red-600">
@@ -530,7 +534,7 @@ Institute Admin
           {(searchTerm || selectedStatus !== 'all' || selectedClass !== 'all') && (
             <button
               onClick={clearFilters}
-              className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center"
+              className="text-red-600 hover:text-blue-800 text-sm font-medium flex items-center"
             >
               <span className="mr-1">🗑️</span>
               Clear Filters
@@ -647,9 +651,9 @@ Institute Admin
                           student.status === 'active'
                             ? 'bg-green-100 text-green-800 border border-green-200'
                             : student.status === 'inactive'
-                            ? 'bg-red-100 text-red-800 border border-red-200'
+                            ? 'bg-red-100 text-blue-800 border border-blue-200'
                             : student.status === 'completed'
-                            ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                            ? 'bg-blue-100 text-blue-800 border border-blue-200'
                             : 'bg-gray-100 text-gray-800 border border-gray-200'
                         }`}>
                           {student.status?.charAt(0).toUpperCase() + student.status?.slice(1) || 'Unknown'}
@@ -670,11 +674,11 @@ Institute Admin
                           <button
                             onClick={() => handleSendCredentials(student)}
                             disabled={actionLoading === 'credentials-' + student._id}
-                            className="text-purple-600 hover:text-purple-800 text-sm font-medium flex items-center gap-1 px-3 py-1 bg-purple-50 hover:bg-purple-100 rounded disabled:opacity-50"
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1 px-3 py-1 bg-blue-50/50 hover:bg-blue-100 rounded disabled:opacity-50"
                             title="Send Credentials"
                           >
                             {actionLoading === 'credentials-' + student._id ? (
-                              <span className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-purple-600"></span>
+                              <span className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-blue-600"></span>
                             ) : (
                               <span>🔑</span>
                             )}
@@ -696,14 +700,6 @@ Institute Admin
                             Payments
                           </button>
                           
-                          {/* Message */}
-                          <button
-                            onClick={() => handleSendMessageClick(student)}
-                            className="text-teal-600 hover:text-teal-800 text-sm font-medium flex items-center gap-1 px-3 py-1 bg-teal-50 hover:bg-teal-100 rounded"
-                            title="Send Message"
-                          >
-                            <span>💬</span> Message
-                          </button>
                           
                           {/* Status Toggle */}
                           {student.status === 'active' ? (
@@ -757,7 +753,7 @@ Institute Admin
                           <button
                             onClick={() => handleDeleteStudent(student._id, student.name)}
                             disabled={actionLoading === 'delete-' + student._id}
-                            className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1 px-3 py-1 bg-red-50 hover:bg-red-100 rounded disabled:opacity-50"
+                            className="text-red-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1 px-3 py-1 bg-red-50 hover:bg-red-100 rounded disabled:opacity-50"
                             title="Delete Permanently"
                           >
                             {actionLoading === 'delete-' + student._id ? (
@@ -932,7 +928,7 @@ Institute Admin
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="p-4 border border-gray-200 rounded-lg">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-purple-600">
+                      <div className="text-2xl font-bold text-blue-600">
                         {formatCurrency(selectedStudent.totalPaid || 0)}
                       </div>
                       <div className="text-sm text-gray-600">Total Paid</div>
@@ -947,7 +943,7 @@ Institute Admin
                       <div className={`text-2xl font-bold ${
                         selectedStudent.status === 'active' ? 'text-green-600' :
                         selectedStudent.status === 'inactive' ? 'text-red-600' :
-                        'text-purple-600'
+                        'text-blue-600'
                       }`}>
                         {selectedStudent.status?.toUpperCase() || 'UNKNOWN'}
                       </div>
@@ -1075,7 +1071,7 @@ Institute Admin
                                   ? 'bg-green-100 text-green-800'
                                   : payment.status === 'pending'
                                   ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-red-100 text-red-800'
+                                  : 'bg-red-100 text-blue-800'
                               }`}>
                                 {payment.status}
                               </span>

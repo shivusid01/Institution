@@ -11,7 +11,7 @@ const Stats = () => {
 
   return (
     <section 
-      className="py-16 bg-gradient-to-b from-red-50 to-purple-50"
+      className="py-16 bg-gradient-to-b from-blue-50 to-blue-50"
     >
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
@@ -31,10 +31,10 @@ const Stats = () => {
           {stats.map((stat, index) => (
             <div 
               key={index}
-              className="text-center p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-purple-200"
+              className="text-center p-6 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-200"
             >
               <div 
-                className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-red-600 to-purple-900 bg-clip-text text-transparent mb-2"
+                className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-blue-900 bg-clip-text text-transparent mb-2"
               >
                 {stat.number}
               </div>

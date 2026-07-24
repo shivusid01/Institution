@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { noticeAPI } from '../../services/api'
+import { noticeAPI, courseAPI } from '../../services/api'
 
 const NoticesManagement = () => {
   const { user } = useAuth()
@@ -30,7 +30,8 @@ const NoticesManagement = () => {
     publishDate: new Date().toISOString().split('T')[0],
     expiryDate: '',
     isImportant: false,
-    attachments: []
+    attachments: [],
+    instructor: ''
   })
 
   // Fetch notices on component mount
@@ -38,6 +39,24 @@ const NoticesManagement = () => {
     fetchNotices()
     fetchNoticeStats()
   }, [filters])
+
+  useEffect(() => {
+    fetchCourses()
+  }, [])
+
+  const fetchCourses = async () => {
+    try {
+      const response = await courseAPI.getAllCourses()
+      if (response.data.success) {
+        const activeCourses = response.data.courses
+          .filter(course => course.classType === 'course' && course.status === 'active')
+          .map(course => course.name)
+        setClassOptions([...new Set(activeCourses)])
+      }
+    } catch (error) {
+      console.error('Error fetching courses:', error)
+    }
+  }
 
   const fetchNotices = async () => {
     try {
@@ -112,7 +131,8 @@ const NoticesManagement = () => {
           publishDate: new Date().toISOString().split('T')[0],
           expiryDate: '',
           isImportant: false,
-          attachments: []
+          attachments: [],
+          instructor: ''
         })
         
         setShowAddModal(false)
@@ -237,13 +257,7 @@ const NoticesManagement = () => {
   }
 
   // Available classes for targeting
-  const classOptions = [
-    'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
-    'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
-    'Class 11 (Science)', 'Class 12 (Science)',
-    'Class 11 (Commerce)', 'Class 12 (Commerce)',
-    'JEE Preparation', 'NEET Preparation', 'UPSC Foundation'
-  ]
+  const [classOptions, setClassOptions] = useState([])
 
   // Categories
   const categories = [
@@ -472,7 +486,7 @@ const NoticesManagement = () => {
                           <div className="font-medium text-gray-900">
                             {notice.title}
                             {notice.isImportant && (
-                              <span className="ml-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+                              <span className="ml-2 text-xs bg-red-100 text-blue-800 px-2 py-1 rounded-full">
                                 ⚠️ Important
                               </span>
                             )}
@@ -482,8 +496,12 @@ const NoticesManagement = () => {
                           </div>
                           <div className="text-xs text-gray-400 mt-2">
                             Created: {new Date(notice.createdAt).toLocaleDateString()}
-                            {notice.publishedBy?.name && ` by ${notice.publishedBy.name}`}
                           </div>
+                          {notice.instructor && (
+                            <div className="text-xs text-gray-500 mt-1 font-medium">
+                              Instructor: {notice.instructor}
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -511,7 +529,7 @@ const NoticesManagement = () => {
                           <div className="text-sm">
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                               notice.priority === 'high'
-                                ? 'bg-red-100 text-red-800'
+                                ? 'bg-red-100 text-blue-800'
                                 : notice.priority === 'medium'
                                 ? 'bg-yellow-100 text-yellow-800'
                                 : 'bg-green-100 text-green-800'
@@ -635,7 +653,7 @@ const NoticesManagement = () => {
                   </div>
 
                   {/* Settings Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     {/* Category */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -688,6 +706,20 @@ const NoticesManagement = () => {
                           </option>
                         ))}
                       </select>
+                    </div>
+
+                    {/* Instructor */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Instructor Name
+                      </label>
+                      <input
+                        type="text"
+                        value={newNotice.instructor}
+                        onChange={(e) => setNewNotice({...newNotice, instructor: e.target.value})}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="e.g. Ashok Sharma"
+                      />
                     </div>
                   </div>
 
@@ -836,7 +868,7 @@ const NoticesManagement = () => {
                   </div>
 
                   {/* Settings Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                     {/* Category */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -905,6 +937,20 @@ const NoticesManagement = () => {
                           </option>
                         ))}
                       </select>
+                    </div>
+
+                    {/* Instructor */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Instructor Name
+                      </label>
+                      <input
+                        type="text"
+                        value={selectedNotice.instructor || ''}
+                        onChange={(e) => setSelectedNotice({...selectedNotice, instructor: e.target.value})}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="e.g. Ashok Sharma"
+                      />
                     </div>
                   </div>
 

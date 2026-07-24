@@ -149,6 +149,54 @@ export const AuthProvider = ({ children }) => {
   };
 
   /* ======================================================
+     GOOGLE LOGIN
+  ====================================================== */
+  const googleLogin = async (credentialData) => {
+    try {
+      setError(null);
+      console.log("🔐 Google login attempt");
+
+      const response = await authAPI.googleLogin(credentialData);
+
+      const { success, token, user: userData, message } = response.data;
+
+      if (!success || !userData) {
+        return {
+          success: false,
+          error: message || "Google login failed",
+        };
+      }
+
+      const userWithRole = {
+        ...userData,
+        role: userData.role || "student",
+      };
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(userWithRole));
+      setUser(userWithRole);
+
+      console.log("✅ Google login successful:", userWithRole.email);
+
+      return {
+        success: true,
+        user: userWithRole,
+        token,
+      };
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        "Google authentication failed. Please try again.";
+
+      setError(errorMessage);
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    }
+  };
+
+  /* ======================================================
      LOGOUT
   ====================================================== */
   const logout = () => {
@@ -169,6 +217,7 @@ export const AuthProvider = ({ children }) => {
         error,
         login,
         signup,
+        googleLogin,
         logout,
         updateUser, // ✅ ADDED
         clearError,

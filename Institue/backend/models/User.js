@@ -23,8 +23,8 @@ const userSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    required: [true, 'Please add a phone number'],
-    unique: true
+    unique: true,
+    sparse: true
   },
   parentPhone: {
     type: String,
@@ -47,7 +47,7 @@ const userSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ['active', 'inactive', 'suspended'],
+    enum: ['active', 'inactive', 'suspended', 'completed'],
     default: 'active'
   },
 
@@ -158,7 +158,9 @@ const userSchema = new mongoose.Schema({
 
   // ===== PASSWORD RESET =====
   resetPasswordToken: String,
-  resetPasswordExpire: Date
+  resetPasswordExpire: Date,
+  otpCode: String,
+  otpExpires: Date
 
 }, {
   timestamps: true

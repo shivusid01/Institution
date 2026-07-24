@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { documentAPI } from '../services/api'
+import { documentAPI, courseAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 
 const DocumentList = ({ userRole }) => {
@@ -16,28 +16,30 @@ const DocumentList = ({ userRole }) => {
   })
   const [expandedDoc, setExpandedDoc] = useState(null)
 
-  // Predefined classes list (only names)
-  const allClassesList = [
-    { id: "class1", name: "Class 1" },
-    { id: "class2", name: "Class 2" },
-    { id: "class3", name: "Class 3" },
-    { id: "class4", name: "Class 4" },
-    { id: "class5", name: "Class 5" },
-    { id: "class6", name: "Class 6" },
-    { id: "class7", name: "Class 7" },
-    { id: "class8", name: "Class 8" },
-    { id: "class9", name: "Class 9" },
-    { id: "class10", name: "Class 10" },
-    { id: "class11_science", name: "Class 11 (Science)" },
-    { id: "class12_science", name: "Class 12 (Science)" },
-    { id: "class11_commerce", name: "Class 11 (Commerce)" },
-    { id: "class12_commerce", name: "Class 12 (Commerce)" },
-    { id: "competition", name: "Competition" }
-  ]
+  const [allClassesList, setAllClassesList] = useState([])
 
   useEffect(() => {
+    fetchCourses()
     fetchData()
   }, [])
+
+  const fetchCourses = async () => {
+    try {
+      const response = await courseAPI.getAllCourses()
+      if (response.data.success) {
+        const activeCourses = response.data.courses
+          .filter(course => course.classType === 'course' && course.status === 'active')
+          .map(course => ({
+            id: course.name,
+            name: course.name,
+            category: course.category
+          }))
+        setAllClassesList(activeCourses)
+      }
+    } catch (error) {
+      console.error('Error fetching courses:', error)
+    }
+  }
 
   useEffect(() => {
     applyFilters()
@@ -59,14 +61,15 @@ const DocumentList = ({ userRole }) => {
       const classMap = new Map()
       
       docsArray.forEach(doc => {
-        if (doc.classId && doc.classId._id && !classMap.has(doc.classId._id)) {
-          classMap.set(doc.classId._id, {
-            _id: doc.classId._id,
-            title: doc.className || 'Untitled Class'
+        const docClassId = (doc.classId && typeof doc.classId === 'object') ? doc.classId._id : doc.classId;
+        if (docClassId && !classMap.has(docClassId)) {
+          classMap.set(docClassId, {
+            _id: docClassId,
+            title: doc.className || docClassId
           })
           uniqueClasses.push({
-            _id: doc.classId._id,
-            title: doc.className || 'Untitled Class'
+            _id: docClassId,
+            title: doc.className || docClassId
           })
         }
       })
@@ -85,7 +88,10 @@ const DocumentList = ({ userRole }) => {
 
     // Filter by class
     if (filters.classId) {
-      filtered = filtered.filter(doc => doc.classId._id === filters.classId)
+      filtered = filtered.filter(doc => {
+        const docClassId = (doc.classId && typeof doc.classId === 'object') ? doc.classId._id : doc.classId;
+        return docClassId === filters.classId;
+      })
     }
 
     // Filter by topic
@@ -201,28 +207,23 @@ const DocumentList = ({ userRole }) => {
               className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all font-medium"
             >
               <option value="">All Classes</option>
-              {/* Static Classes */}
-              <optgroup label="School Classes">
-                {allClassesList.slice(0, 10).map(cls => (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.name}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Higher Secondary">
-                {allClassesList.slice(10, 14).map(cls => (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.name}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Competitive">
-                {allClassesList.slice(14).map(cls => (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.name}
-                  </option>
-                ))}
-              </optgroup>
+              {/* Dynamic Categories */}
+              {Object.entries(
+                allClassesList.reduce((acc, cls) => {
+                  const cat = cls.category || 'General';
+                  if (!acc[cat]) acc[cat] = [];
+                  acc[cat].push(cls);
+                  return acc;
+                }, {})
+              ).map(([category, items]) => (
+                <optgroup key={category} label={category}>
+                  {items.map(cls => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
               {/* Dynamic Classes from Documents */}
               {classes.length > 0 && (
                 <optgroup label="Document Classes">

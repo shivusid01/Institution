@@ -48,14 +48,14 @@ const Testimonials = () => {
           {testimonials.map((testimonial, index) => (
             <div 
               key={index}
-              className="card hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-red-200 bg-gradient-to-b from-white to-gray-50"
+              className="card hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-200 bg-gradient-to-b from-white to-gray-50"
             >
               <div className="p-6">
                 <div className="flex items-center mb-4">
                   <div 
-                    className="h-12 w-12 rounded-full bg-gradient-to-r from-red-100 to-purple-100 flex items-center justify-center mr-4 shadow-md"
+                    className="h-12 w-12 rounded-full bg-gradient-to-r from-blue-100 to-blue-100 flex items-center justify-center mr-4 shadow-md"
                   >
-                    <span className="font-bold bg-gradient-to-r from-red-600 to-purple-900 bg-clip-text text-transparent">
+                    <span className="font-bold bg-gradient-to-r from-blue-600 to-blue-900 bg-clip-text text-transparent">
                       {testimonial.avatar}
                     </span>
                   </div>

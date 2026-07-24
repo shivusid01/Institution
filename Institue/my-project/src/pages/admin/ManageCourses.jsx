@@ -6,47 +6,45 @@ import { format } from 'date-fns'
 
 const ManageCourses = () => {
   const { currentUser } = useAuth()
-  const [activeTab, setActiveTab] = useState('all')
-  const [showAddModal, setShowAddModal] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false)
+  const [activeTab, setActiveTab] = useState('classes') // 'classes' or 'catalog'
+  const [activeFilter, setActiveFilter] = useState('all') // 'all', 'active', 'inactive'
+  
+  // Modals
+  const [showAddClassModal, setShowAddClassModal] = useState(false)
+  const [showEditClassModal, setShowEditClassModal] = useState(false)
+  const [showAddCatalogModal, setShowAddCatalogModal] = useState(false)
+  const [showEditCatalogModal, setShowEditCatalogModal] = useState(false)
+  
   const [selectedCourse, setSelectedCourse] = useState(null)
+  const [selectedClass, setSelectedClass] = useState(null)
   const [loading, setLoading] = useState(false)
+  
+  // Data lists
   const [courses, setCourses] = useState([])
   const [upcomingClasses, setUpcomingClasses] = useState([])
 
-  // Available classes and courses for selection
-  const availableOptions = [
-    { id: "class1", name: "Class 1", type: "class", category: "School" },
-    { id: "class2", name: "Class 2", type: "class", category: "School" },
-    { id: "class3", name: "Class 3", type: "class", category: "School" },
-    { id: "class4", name: "Class 4", type: "class", category: "School" },
-    { id: "class5", name: "Class 5", type: "class", category: "School" },
-    { id: "class6", name: "Class 6", type: "class", category: "School" },
-    { id: "class7", name: "Class 7", type: "class", category: "School" },
-    { id: "class8", name: "Class 8", type: "class", category: "School" },
-    { id: "class9", name: "Class 9", type: "class", category: "School" },
-    { id: "class10", name: "Class 10", type: "class", category: "School" },
-    { id: "class11_science", name: "Class 11 (Science)", type: "class", category: "Science" },
-    { id: "class12_science", name: "Class 12 (Science)", type: "class", category: "Science" },
-    { id: "class11_commerce", name: "Class 11 (Commerce)", type: "class", category: "Commerce" },
-    { id: "class12_commerce", name: "Class 12 (Commerce)", type: "class", category: "Commerce" },
-    { id: "bcom1", name: "B.COM 1st Year", type: "class", category: "Commerce" },
-    { id: "bcom2", name: "B.COM 2nd Year", type: "class", category: "Commerce" },
-    { id: "bcom3", name: "B.COM 3rd Year", type: "class", category: "Commerce" },
-    { id: "mcom", name: "M.COM", type: "class", category:
-      "Commerce" },
-    { id: "competition", name: "Competition", type: "class", category: "Competitive Exams" },
-  ];
+  // Syllabus PDF upload states
+  const [syllabusFile, setSyllabusFile] = useState(null)
+  const [uploadingSyllabus, setUploadingSyllabus] = useState(false)
 
-  // Mock Instructor Names (Select Option)
+  // Options
+  const availableOptions = courses
+    .filter(course => course.classType === 'course' && course.status === 'active')
+    .map(course => ({
+      id: course.name,
+      name: course.name,
+      type: 'course',
+      category: course.category
+    }));
+
+
   const instructorOptions = [
-    { id: 1, name: "Mr. Jeetlal Sharma " },
+    { id: 1, name: "Mr. Jeetlal Sharma" },
     { id: 2, name: "Ashok Sharma" },
     { id: 3, name: "Chandra Bhushan Kumar" },
     { id: 4, name: "Meenu sharma" },
   ];
 
-  // Time Duration Options
   const durationOptions = [
     { value: 30, label: "30 minutes" },
     { value: 45, label: "45 minutes" },
@@ -55,21 +53,33 @@ const ManageCourses = () => {
     { value: 120, label: "120 minutes" },
   ];
 
-  const [newCourse, setNewCourse] = useState({
+  // Forms states
+  const [classForm, setClassForm] = useState({
     selectedOption: '',
-    name: '',
-    description: '',
-    instructor: '',
+    topic: '',
     instructorName: '',
-    status: 'active',
-    meetingLink: '',
     startTime: '',
     duration: 60,
-    topic: '',
-    meetingPlatform: 'google_meet'
-  })
+    meetingLink: '',
+    meetingPlatform: 'google_meet',
+    description: ''
+  });
 
-  // Fetch courses and upcoming classes
+  const [catalogForm, setCatalogForm] = useState({
+    name: '',
+    description: '',
+    category: 'School Level',
+    fee: '',
+    duration: '',
+    language: 'Hindi',
+    tag: '',
+    subjects: '',
+    features: '',
+    instructor: 'Mr. Jeetlal Sharma',
+    status: 'active',
+    syllabusUrl: ''
+  });
+
   useEffect(() => {
     fetchCourses()
     fetchUpcomingClasses()
@@ -100,494 +110,530 @@ const ManageCourses = () => {
     }
   }
 
- const handleAddCourse = async () => {
-  console.log('🔍 handleAddCourse called');
-  console.log('Topic value:', newCourse.topic);
-
-  if (!newCourse.selectedOption) {
-    alert('Please select a class or course');
-    return;
-  }
-
-  if (!newCourse.topic || newCourse.topic.trim() === '') {
-    alert('Please enter class topic');
-    return;
-  }
-
-  if (!newCourse.startTime) {
-    alert('Please select start time');
-    return;
-  }
-
-  if (!newCourse.meetingLink) {
-    alert('Please provide meeting link');
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const selectedOption = availableOptions.find(
-      opt => opt.id === newCourse.selectedOption
-    );
-
-    // =========================
-    // 1️⃣ CREATE COURSE FIRST
-    // =========================
-    await courseAPI.createCourse({
-      name: selectedOption ? selectedOption.name : newCourse.name,
-      category: selectedOption ? selectedOption.category : 'General',
-      instructor: newCourse.instructorName,
-      description:
-        newCourse.description ||
-        `Course for ${selectedOption?.name || 'New Course'}`,
-      status: 'active'
-    });
-
-    console.log('✅ Course created successfully');
-
-    // =========================
-    // 2️⃣ CREATE CLASS
-    // =========================
-    const classData = {
-      title: selectedOption ? selectedOption.name : newCourse.name,
-      description:
-        newCourse.description ||
-        `Class for ${selectedOption?.name || 'New Class'}`,
-      category: selectedOption ? selectedOption.category : 'General',
-      subject: selectedOption ? selectedOption.name : newCourse.name,
-      topic: newCourse.topic.trim(),
-      startTime: newCourse.startTime,
-      duration: newCourse.duration,
-      meetingLink: newCourse.meetingLink,
-      meetingPlatform: newCourse.meetingPlatform,
-      instructorName: newCourse.instructorName,
-      instructorId: currentUser._id,
-      targetAudience: ['all'],
-      visibility: 'all_students'
-    };
-
-    console.log('📤 Sending class data:', classData);
-
-    const response = await classAPI.createClass(classData);
-
-    console.log('✅ Class Response:', response.data);
-
-    if (response.data.success) {
-      alert('✅ Course & Class scheduled successfully!');
-
-      setShowAddModal(false);
-      resetNewCourseForm();
-
-      await Promise.all([
-        fetchCourses(),
-        fetchUpcomingClasses()
-      ]);
-    }
-
-  } catch (error) {
-    console.error('❌ Error scheduling class:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status
-    });
-
-    if (error.response?.data?.message) {
-      alert(`Error: ${error.response.data.message}`);
-    } else {
-      alert('Failed to schedule class. Please check console.');
-    }
-
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // ✅ NEW FUNCTION: Delete Class
-  const handleDeleteClass = async (classId) => {
-    if (!window.confirm('Are you sure you want to delete this class? This will remove it from student dashboards as well.')) {
+  // Handle Class Addition (existing flow)
+  const handleAddClass = async (e) => {
+    e.preventDefault();
+    if (!classForm.selectedOption || !classForm.topic || !classForm.startTime || !classForm.meetingLink) {
+      alert('Please fill in all required fields');
       return;
     }
 
     try {
-      // First, remove from upcoming classes in state
-      setUpcomingClasses(prev => prev.filter(cls => cls._id !== classId));
-      
-      // Try to delete from backend
-      try {
-        await classAPI.deleteClass(classId);
-        console.log('✅ Class deleted from backend');
-      } catch (backendError) {
-        console.warn('⚠️ Backend delete failed, but removed from local state:', backendError.message);
+      setLoading(true);
+      const selectedOption = availableOptions.find(opt => opt.id === classForm.selectedOption);
+      const name = selectedOption ? selectedOption.name : classForm.selectedOption;
+      const category = selectedOption ? selectedOption.category : 'General';
+
+      // 1. Create course entry (with backend check to retrieve existing instead of error)
+      await courseAPI.createCourse({
+        name,
+        category,
+        instructor: classForm.instructorName,
+        description: classForm.description || `Class for ${name}`,
+        status: 'active',
+        classType: 'live_class'
+      });
+
+      // 2. Create the Class schedule
+      const classData = {
+        title: name,
+        description: classForm.description || `Class for ${name}`,
+        category,
+        subject: name,
+        topic: classForm.topic.trim(),
+        startTime: classForm.startTime,
+        duration: classForm.duration,
+        meetingLink: classForm.meetingLink,
+        meetingPlatform: classForm.meetingPlatform,
+        instructorName: classForm.instructorName,
+        instructorId: currentUser?._id,
+        targetAudience: ['all'],
+        visibility: 'all_students'
+      };
+
+      const response = await classAPI.createClass(classData);
+      if (response.data.success) {
+        alert('✅ Class scheduled successfully!');
+        setShowAddClassModal(false);
+        resetClassForm();
+        await Promise.all([fetchCourses(), fetchUpcomingClasses()]);
       }
-      
-      // Also remove from localStorage if exists
-      const storedClasses = JSON.parse(localStorage.getItem('scheduledClasses') || '[]');
-      const updatedClasses = storedClasses.filter(cls => cls._id !== classId);
-      localStorage.setItem('scheduledClasses', JSON.stringify(updatedClasses));
-      
-      alert('✅ Class deleted successfully! It will no longer appear in student dashboards.');
-      
     } catch (error) {
-      console.error('Error deleting class:', error);
-      alert('Failed to delete class. Please try again.');
+      console.error('Error scheduling class:', error);
+      alert(error.response?.data?.message || 'Failed to schedule class.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleEditCourse = async () => {
+  const handleDeleteClass = async (classId) => {
+    if (!window.confirm('Are you sure you want to delete this class?')) return;
     try {
-      setLoading(true)
-      
-      const courseData = {
-        name: newCourse.name,
-        instructor: newCourse.instructorName,
-        description: newCourse.description,
-        status: newCourse.status
-      }
+      await classAPI.deleteClass(classId);
+      alert('✅ Class deleted successfully!');
+      fetchUpcomingClasses();
+    } catch (error) {
+      console.error('Error deleting class:', error);
+      alert('Failed to delete class.');
+    }
+  };
 
-      const response = await courseAPI.updateCourse(selectedCourse._id, courseData)
-      
-      if (response.data.success) {
-        alert('Course updated successfully!')
-        setShowEditModal(false)
-        fetchCourses()
+  // Syllabus PDF upload helper
+  const handleUploadSyllabusFile = async (file) => {
+    try {
+      setUploadingSyllabus(true)
+      const data = new FormData()
+      data.append('syllabus', file)
+      const res = await courseAPI.uploadSyllabus(data)
+      if (res.data.success) {
+        return res.data.fileUrl
       }
     } catch (error) {
-      console.error('Error updating course:', error)
-      alert(error.response?.data?.message || 'Failed to update course')
+      console.error('Syllabus upload error:', error)
+      alert('Failed to upload syllabus PDF. Ensure it is a valid PDF under 10MB.')
     } finally {
-      setLoading(false)
+      setUploadingSyllabus(false)
     }
+    return '';
   }
+
+  // Handle Catalog Course Addition (New Flow)
+  const handleAddCatalogCourse = async (e) => {
+    e.preventDefault();
+    if (!catalogForm.name || !catalogForm.fee || !catalogForm.duration) {
+      alert('Please fill in required fields: Title, Fee, and Duration');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      let uploadedUrl = '';
+      if (syllabusFile) {
+        uploadedUrl = await handleUploadSyllabusFile(syllabusFile);
+        if (!uploadedUrl) {
+          setLoading(false);
+          return;
+        }
+      }
+
+      const subjectsArray = catalogForm.subjects.split(',').map(s => s.trim()).filter(Boolean);
+      const featuresArray = catalogForm.features.split(',').map(f => f.trim()).filter(Boolean);
+
+      const courseData = {
+        name: catalogForm.name,
+        description: catalogForm.description,
+        category: catalogForm.category,
+        fee: catalogForm.fee,
+        duration: catalogForm.duration,
+        language: catalogForm.language,
+        tag: catalogForm.tag,
+        subjects: subjectsArray,
+        features: featuresArray,
+        instructor: catalogForm.instructor,
+        status: catalogForm.status,
+        classType: 'course',
+        syllabusUrl: uploadedUrl
+      };
+
+      const response = await courseAPI.createCourse(courseData);
+      if (response.data.success) {
+        alert('✅ Course added to catalog successfully!');
+        setShowAddCatalogModal(false);
+        resetCatalogForm();
+        fetchCourses();
+      }
+    } catch (error) {
+      console.error('Error adding course to catalog:', error);
+      alert(error.response?.data?.message || 'Failed to add course.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Catalog Course Update
+  const handleEditCatalogCourse = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      let uploadedUrl = catalogForm.syllabusUrl;
+      
+      if (syllabusFile) {
+        uploadedUrl = await handleUploadSyllabusFile(syllabusFile);
+        if (!uploadedUrl) {
+          setLoading(false);
+          return;
+        }
+      }
+
+      const subjectsArray = typeof catalogForm.subjects === 'string'
+        ? catalogForm.subjects.split(',').map(s => s.trim()).filter(Boolean)
+        : catalogForm.subjects;
+
+      const featuresArray = typeof catalogForm.features === 'string'
+        ? catalogForm.features.split(',').map(f => f.trim()).filter(Boolean)
+        : catalogForm.features;
+
+      const courseData = {
+        name: catalogForm.name,
+        description: catalogForm.description,
+        category: catalogForm.category,
+        fee: catalogForm.fee,
+        duration: catalogForm.duration,
+        language: catalogForm.language,
+        tag: catalogForm.tag,
+        subjects: subjectsArray,
+        features: featuresArray,
+        instructor: catalogForm.instructor,
+        status: catalogForm.status,
+        syllabusUrl: uploadedUrl
+      };
+
+      const response = await courseAPI.updateCourse(selectedCourse._id, courseData);
+      if (response.data.success) {
+        alert('✅ Course updated successfully!');
+        setShowEditCatalogModal(false);
+        resetCatalogForm();
+        fetchCourses();
+      }
+    } catch (error) {
+      console.error('Error updating catalog course:', error);
+      alert(error.response?.data?.message || 'Failed to update course.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDeleteCourse = async (id) => {
-    if (window.confirm('Are you sure you want to delete this course?')) {
-      try {
-        const response = await courseAPI.deleteCourse(id)
-        if (response.data.success) {
-          alert('Course deleted successfully!')
-          fetchCourses()
-        }
-      } catch (error) {
-        console.error('Error deleting course:', error)
-        alert('Failed to delete course')
+    if (!window.confirm('Are you sure you want to delete this course from the catalog?')) return;
+    try {
+      const response = await courseAPI.deleteCourse(id);
+      if (response.data.success) {
+        alert('✅ Course deleted successfully!');
+        fetchCourses();
       }
+    } catch (error) {
+      console.error('Error deleting course:', error);
+      alert(error.response?.data?.message || 'Failed to delete course.');
     }
-  }
+  };
 
-  const resetNewCourseForm = () => {
-    setNewCourse({
+  const resetClassForm = () => {
+    setClassForm({
       selectedOption: '',
-      name: '',
-      description: '',
-      instructor: '',
+      topic: '',
       instructorName: '',
-      status: 'active',
-      meetingLink: '',
       startTime: '',
       duration: 60,
-      topic: '',
-      meetingPlatform: 'google_meet'
-    })
-  }
+      meetingLink: '',
+      meetingPlatform: 'google_meet',
+      description: ''
+    });
+  };
 
-  const filteredCourses = activeTab === 'all' 
-    ? courses 
-    : courses.filter(course => course.status === activeTab)
+  const resetCatalogForm = () => {
+    setCatalogForm({
+      name: '',
+      description: '',
+      category: 'School Level',
+      fee: '',
+      duration: '',
+      language: 'Hindi',
+      tag: '',
+      subjects: '',
+      features: '',
+      instructor: 'Mr. Jeetlal Sharma',
+      status: 'active',
+      syllabusUrl: ''
+    });
+    setSyllabusFile(null);
+  };
 
-  const categories = ['All', 'Active', 'Inactive']
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http')) return imagePath;
+    const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const baseUrl = apiURL.replace('/api', '');
+    return `${baseUrl}${imagePath}`;
+  };
 
-  // Format time for display
-  const formatTime = (dateString) => {
-    try {
-      const date = new Date(dateString)
-      return format(date, 'hh:mm a')
-    } catch (error) {
-      return 'Invalid time'
-    }
-  }
-
-  // Format date for display
-  const formatDate = (dateString) => {
-    try {
-      const date = new Date(dateString)
-      return format(date, 'dd MMM yyyy')
-    } catch (error) {
-      return 'Invalid date'
-    }
-  }
+  // Filter lists based on tab and status
+  const catalogCourses = courses.filter(course => course.classType === 'course');
+  const filteredCatalog = activeFilter === 'all'
+    ? catalogCourses
+    : catalogCourses.filter(course => course.status === activeFilter);
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
+      {/* Title */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Manage Courses / Classes</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Manage Classes & Course Catalog</h1>
         <p className="text-gray-600 mt-2">
-          Create, edit, and manage all classes and courses offered by the institute.
+          Schedule online classes for students or manage the public course catalog with syllabus PDF downloads.
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Students</p>
-              <p className="text-2xl font-bold text-purple-600 mt-1">
-                {courses.reduce((sum, course) => sum + (course.totalStudents || 0), 0)}
-              </p>
-            </div>
-            <div className="p-3 rounded-full bg-purple-100 text-purple-600">
-              <span className="text-2xl">👨‍🎓</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Upcoming Classes</p>
-              <p className="text-2xl font-bold text-orange-600 mt-1">
-                {upcomingClasses.length}
-              </p>
-            </div>
-            <div className="p-3 rounded-full bg-orange-100 text-orange-600">
-              <span className="text-2xl">📅</span>
-            </div>
-          </div>
-        </div>
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200 mb-8">
+        <button
+          onClick={() => setActiveTab('classes')}
+          className={`py-3 px-6 font-semibold text-lg border-b-2 transition-all ${
+            activeTab === 'classes'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          📅 Live Classes Schedule
+        </button>
+        <button
+          onClick={() => setActiveTab('catalog')}
+          className={`py-3 px-6 font-semibold text-lg border-b-2 transition-all ${
+            activeTab === 'catalog'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          🎓 Public Course Catalog
+        </button>
       </div>
 
-
-       <div className="card mb-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setActiveTab(category.toLowerCase())}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  activeTab === category.toLowerCase()
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <button 
-              onClick={() => setShowAddModal(true)}
-              className="btn-primary flex items-center"
-            >
-              <span className="mr-2">➕</span>
-              Add New Course & Schedule Class
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Upcoming Classes Section - WITH DELETE BUTTONS ✅ */}
-      {upcomingClasses.length > 0 && (
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-gray-900">📅 Upcoming Classes</h2>
+      {/* ========================================================
+          TAB 1: LIVE CLASSES SCHEDULE
+          ======================================================== */}
+      {activeTab === 'classes' && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Live Scheduled Sessions</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Currently scheduled live classes on Google Meet / Zoom.
+              </p>
+            </div>
             <button
-              onClick={fetchUpcomingClasses}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              onClick={() => setShowAddClassModal(true)}
+              className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2"
             >
-              🔄 Refresh
+              <span>➕</span> Schedule Live Class
             </button>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {upcomingClasses.slice(0, 4).map((classItem) => (
-              <div key={classItem._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative">
-                {/* ✅ DELETE BUTTON - Top Right Corner */}
-                <button
-                  onClick={() => handleDeleteClass(classItem._id)}
-                  className="absolute top-3 right-3 text-red-500 hover:text-red-700 bg-white rounded-full p-1 shadow-sm hover:shadow-md"
-                  title="Delete Class"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-                
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded">
+
+          {upcomingClasses.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {upcomingClasses.map((classItem) => (
+                <div key={classItem._id} className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow relative">
+                  <button
+                    onClick={() => handleDeleteClass(classItem._id)}
+                    className="absolute top-4 right-4 text-red-500 hover:text-red-700 p-1 bg-gray-50 hover:bg-red-50 rounded-full transition-colors"
+                    title="Cancel/Delete Class"
+                  >
+                    🗑️
+                  </button>
+
+                  <div className="mb-4">
+                    <span className="inline-block text-xs font-semibold text-blue-800 bg-blue-100 px-2.5 py-1 rounded">
                       {classItem.className || classItem.subject}
                     </span>
-                    <h4 className="font-bold text-gray-900 mt-1">{classItem.subject}</h4>
+                    <h3 className="text-lg font-bold text-gray-900 mt-2">{classItem.subject}</h3>
                     <p className="text-sm text-gray-600">{classItem.topic}</p>
                   </div>
-                </div>
-                
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center text-gray-600">
-                    <span className="mr-2">👨‍🏫</span>
-                    <span>{classItem.instructorName}</span>
+
+                  <div className="space-y-2 text-sm text-gray-700">
+                    <div className="flex items-center gap-2">
+                      <span>👨‍🏫</span>
+                      <span>Instructor: <strong>{classItem.instructorName}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span>⏰</span>
+                      <span>
+                        {format(new Date(classItem.startTime), 'dd MMM yyyy')} • {format(new Date(classItem.startTime), 'hh:mm a')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span>⏱️</span>
+                      <span>Duration: {classItem.duration} mins</span>
+                    </div>
                   </div>
-                  <div className="flex items-center text-gray-600">
-                    <span className="mr-2">⏰</span>
-                    <span>
-                      {formatDate(classItem.startTime)} • {formatTime(classItem.startTime)}
-                    </span>
-                  </div>
-                  <div className="flex items-center text-gray-600">
-                    <span className="mr-2">⏱️</span>
-                    <span>{classItem.duration} minutes</span>
-                  </div>
+
                   {classItem.meetingLink && (
-                    <div className="pt-2">
-                      <a 
-                        href={classItem.meetingLink} 
-                        target="_blank" 
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
+                      <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">
+                        Platform: {classItem.meetingPlatform?.replace('_', ' ')}
+                      </span>
+                      <a
+                        href={classItem.meetingLink}
+                        target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
+                        className="text-blue-600 hover:text-blue-800 text-sm font-semibold flex items-center gap-1"
                       >
-                        🔗 Join Live Class
+                        🔗 Join Meeting Link
                       </a>
                     </div>
                   )}
                 </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+              <span className="text-4xl block mb-2">📅</span>
+              <p className="text-gray-500">No live classes scheduled currently.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================
+          TAB 2: PUBLIC COURSE CATALOG
+          ======================================================== */}
+      {activeTab === 'catalog' && (
+        <div className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Public Courses Catalog</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Add, edit, or remove courses appearing on the public "Explore Our Courses" page.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+                {['all', 'active', 'inactive'].map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setActiveFilter(filter)}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all capitalize ${
+                      activeFilter === filter
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    {filter}
+                  </button>
+                ))}
               </div>
-            ))}
+              <button
+                onClick={() => setShowAddCatalogModal(true)}
+                className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2"
+              >
+                <span>➕</span> Add Course to Catalog
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Course Details</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Medium / Fee</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Duration</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Syllabus PDF</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {filteredCatalog.map((course) => (
+                  <tr key={course._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-gray-900">{course.name}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">Category: {course.category}</div>
+                      {course.tag && (
+                        <span className="inline-block text-[10px] bg-red-100 text-blue-800 font-bold px-2 py-0.5 rounded mt-1">
+                          {course.tag}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-semibold">{course.language} Medium</div>
+                      <div className="text-sm text-green-600 font-bold mt-0.5">{course.fee}</div>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-700">
+                      {course.duration}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      {course.syllabusUrl ? (
+                        <a
+                          href={getImageUrl(course.syllabusUrl)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                        >
+                          📄 Download PDF
+                        </a>
+                      ) : (
+                        <span className="text-gray-400">Not Uploaded</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        course.status === 'active'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-blue-800'
+                      }`}>
+                        {course.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => {
+                            setSelectedCourse(course);
+                            setCatalogForm({
+                              name: course.name,
+                              description: course.description || '',
+                              category: course.category || 'School Level',
+                              fee: course.fee || '',
+                              duration: course.duration || '',
+                              language: course.language || 'Hindi',
+                              tag: course.tag || '',
+                              subjects: course.subjects ? course.subjects.join(', ') : '',
+                              features: course.features ? course.features.join(', ') : '',
+                              instructor: course.instructor || 'Mr. Jeetlal Sharma',
+                              status: course.status || 'active',
+                              syllabusUrl: course.syllabusUrl || ''
+                            });
+                            setShowEditCatalogModal(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-800 font-semibold"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCourse(course._id)}
+                          className="text-red-500 hover:text-red-700 font-semibold"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+
+                {filteredCatalog.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="text-center py-10 text-gray-500">
+                      No courses found in catalog. Seeding will run if database is empty.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      {/* Controls */}
-     
-
-      {/* Courses Table */}
-      <div className="card">
-  {loading ? (
-    <div className="text-center py-12">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-      <p className="text-gray-600 mt-4">Loading courses...</p>
-    </div>
-  ) : (
-    <>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead>
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course/Class</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Students</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Instructor</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {filteredCourses.map((course) => (
-              <tr key={course._id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center mr-3">
-                      <span className="text-blue-600">
-                        {course.classType === 'course' ? '🎓' : '📚'}
-                      </span>
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-900">{course.name}</div>
-                      {course.description && (
-                        <div className="text-sm text-gray-500 truncate max-w-xs">
-                          {course.description}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </td>
-
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">
-                    {course.category}
-                  </span>
-                </td>
-
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="font-medium">{course.totalStudents || 0}</div>
-                </td>
-
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="font-medium">{course.instructor || 'Not assigned'}</div>
-                </td>
-
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      course.status === 'active'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}
-                  >
-                    {course.status?.charAt(0).toUpperCase() +
-                      course.status?.slice(1) || 'Active'}
-                  </span>
-                </td>
-
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => {
-                        setSelectedCourse(course)
-                        setNewCourse({
-                          selectedOption: '',
-                          name: course.name,
-                          description: course.description || '',
-                          instructor: course.instructor || '',
-                          instructorName: course.instructor || '',
-                          status: course.status || 'active'
-                        })
-                        setShowEditModal(true)
-                      }}
-                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      onClick={() => handleDeleteCourse(course._id)}
-                      className="text-red-600 hover:text-red-700 text-sm font-medium"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
-        <div className="text-sm text-gray-700">
-          Showing <span className="font-medium">1</span> to{' '}
-          <span className="font-medium">{filteredCourses.length}</span> of{' '}
-          <span className="font-medium">{courses.length}</span> courses
-        </div>
-      </div>
-    </>
-  )}
-</div>
-
-      {/* Add Course Modal */}
-      {showAddModal && (
+      {/* ========================================================
+          MODAL: ADD LIVE CLASS SCHEDULE
+          ======================================================== */}
+      {showAddClassModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Add New Course & Schedule Class</h2>
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[95vh] overflow-y-auto">
+            <form onSubmit={handleAddClass} className="p-6 space-y-6">
+              <div className="flex justify-between items-center border-b pb-4">
+                <h2 className="text-2xl font-bold text-gray-900">Schedule a Live Online Class</h2>
                 <button
+                  type="button"
                   onClick={() => {
-                    setShowAddModal(false)
-                    resetNewCourseForm()
+                    setShowAddClassModal(false)
+                    resetClassForm()
                   }}
                   className="text-gray-400 hover:text-gray-600 text-2xl"
                 >
@@ -595,135 +641,96 @@ const ManageCourses = () => {
                 </button>
               </div>
 
-              <div className="space-y-6">
-                {/* Classes and Courses Dropdown */}
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Class or Course *
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Select Class/Course Standard *
                   </label>
                   <select
-                    value={newCourse.selectedOption}
-                    onChange={(e) => {
-                      const selectedOption = availableOptions.find(opt => opt.id === e.target.value)
-                      setNewCourse({
-                        ...newCourse,
-                        selectedOption: e.target.value,
-                        name: selectedOption ? selectedOption.name : '',
-                        topic: '' // Always empty when selecting
-                      })
-                    }}
+                    value={classForm.selectedOption}
+                    onChange={(e) => setClassForm({ ...classForm, selectedOption: e.target.value })}
                     required
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Select Class or Course</option>
-                    
-                    {/* Classes Section */}
-                    <optgroup label="📚 Classes">
-                      {availableOptions
-                        .filter(opt => opt.type === 'class')
-                        .map((option) => (
-                          <option key={option.id} value={option.id}>
-                            {option.name}
-                          </option>
-                        ))}
-                    </optgroup>
-                    
-                    {/* Courses Section */}
-                    <optgroup label="🎓 Courses">
-                      {availableOptions
-                        .filter(opt => opt.type === 'course')
-                        .map((option) => (
-                          <option key={option.id} value={option.id}>
-                            {option.name}
-                          </option>
-                        ))}
-                    </optgroup>
+                    <option value="">Select Class Standard</option>
+                    {availableOptions.map(opt => (
+                      <option key={opt.id} value={opt.id}>{opt.name} ({opt.category})</option>
+                    ))}
                   </select>
                 </div>
 
-                {/* Class Topic - FIXED ✅ */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Class Topic *
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Class Topic / Chapter Title *
                   </label>
                   <input
                     type="text"
-                    value={newCourse.topic}
-                    onChange={(e) => setNewCourse({...newCourse, topic: e.target.value})}
+                    value={classForm.topic}
+                    onChange={(e) => setClassForm({ ...classForm, topic: e.target.value })}
                     required
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="e.g., Calculus - Sets and Functions, Algebra Basics, Physics - Motion, etc."
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g. Chapter 1: Real Numbers"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Enter specific topic for this class. This will be shown to students.
-                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Instructor Name (Select Option) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Instructor Name *
                     </label>
                     <select
-                      value={newCourse.instructorName}
-                      onChange={(e) => setNewCourse({...newCourse, instructorName: e.target.value})}
+                      value={classForm.instructorName}
+                      onChange={(e) => setClassForm({ ...classForm, instructorName: e.target.value })}
                       required
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
                     >
                       <option value="">Select Instructor</option>
-                      {instructorOptions.map((instructor) => (
-                        <option key={instructor.id} value={instructor.name}>
-                          {instructor.name}
-                        </option>
+                      {instructorOptions.map(inst => (
+                        <option key={inst.id} value={inst.name}>{inst.name}</option>
                       ))}
-                      <option value="other">Other</option>
                     </select>
                   </div>
 
-                  {/* Start Time */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Class Start Time *
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Start Date & Time *
                     </label>
                     <input
                       type="datetime-local"
-                      value={newCourse.startTime}
-                      onChange={(e) => setNewCourse({...newCourse, startTime: e.target.value})}
+                      value={classForm.startTime}
+                      onChange={(e) => setClassForm({ ...classForm, startTime: e.target.value })}
                       required
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
                     />
                   </div>
+                </div>
 
-                  {/* Duration */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Duration *
                     </label>
                     <select
-                      value={newCourse.duration}
-                      onChange={(e) => setNewCourse({...newCourse, duration: parseInt(e.target.value)})}
+                      value={classForm.duration}
+                      onChange={(e) => setClassForm({ ...classForm, duration: parseInt(e.target.value) })}
                       required
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
                     >
-                      {durationOptions.map((duration) => (
-                        <option key={duration.value} value={duration.value}>
-                          {duration.label}
-                        </option>
+                      {durationOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
                       ))}
                     </select>
                   </div>
 
-                  {/* Meeting Platform */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Meeting Platform *
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Platform *
                     </label>
                     <select
-                      value={newCourse.meetingPlatform}
-                      onChange={(e) => setNewCourse({...newCourse, meetingPlatform: e.target.value})}
+                      value={classForm.meetingPlatform}
+                      onChange={(e) => setClassForm({ ...classForm, meetingPlatform: e.target.value })}
                       required
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
                     >
                       <option value="google_meet">Google Meet</option>
                       <option value="zoom">Zoom</option>
@@ -732,202 +739,486 @@ const ManageCourses = () => {
                   </div>
                 </div>
 
-                {/* Live Meeting Link */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Live Meeting Link *
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Meeting Link URL *
                   </label>
-                  <div className="flex items-center">
-                    <span className="mr-2 text-gray-500">🔗</span>
-                    <input
-                      type="url"
-                      value={newCourse.meetingLink}
-                      onChange={(e) => setNewCourse({...newCourse, meetingLink: e.target.value})}
-                      required
-                      className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="https://meet.google.com/xxx-xxxx-xxx"
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Students will use this link to join the live class
-                  </p>
-                </div>
-
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description *
-                  </label>
-                  <textarea
-                    value={newCourse.description}
-                    onChange={(e) => setNewCourse({...newCourse, description: e.target.value})}
-                    rows={4}
+                  <input
+                    type="url"
+                    value={classForm.meetingLink}
+                    onChange={(e) => setClassForm({ ...classForm, meetingLink: e.target.value })}
                     required
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter course/class description, learning objectives, etc."
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    placeholder="https://meet.google.com/xxx-xxxx-xxx"
                   />
                 </div>
 
-                {/* Status */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status *
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Extra Instructions / Notes
                   </label>
-                  <select
-                    value={newCourse.status}
-                    onChange={(e) => setNewCourse({...newCourse, status: e.target.value})}
-                    required
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
-
-                {/* Important Note */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-start">
-                    <span className="text-blue-600 mr-2">💡</span>
-                    <div>
-                      <p className="text-sm text-blue-800 font-medium">Important Note</p>
-                      <p className="text-xs text-blue-600 mt-1">
-                        When you click "Add Course", a new course will be created and a class will be scheduled automatically. 
-                        The class will appear in the "Upcoming Classes" section above with the live meeting link.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-4 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowAddModal(false)
-                      resetNewCourseForm()
-                    }}
-                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleAddCourse}
-                    disabled={loading}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-                        Scheduling...
-                      </>
-                    ) : (
-                      'Schedule Class'
-                    )}
-                  </button>
+                  <textarea
+                    value={classForm.description}
+                    onChange={(e) => setClassForm({ ...classForm, description: e.target.value })}
+                    rows="3"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    placeholder="Enter details like homework review, books to keep ready..."
+                  />
                 </div>
               </div>
-            </div>
+
+              <div className="flex justify-end gap-3 border-t pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddClassModal(false)
+                    resetClassForm()
+                  }}
+                  className="px-5 py-2 border rounded-lg hover:bg-gray-50 text-gray-700 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50"
+                >
+                  {loading ? 'Scheduling...' : 'Schedule Class'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
-      {/* Edit Course Modal */}
-      {showEditModal && selectedCourse && (
+      {/* ========================================================
+          MODAL: ADD COURSE TO CATALOG (WITH PDF UPLOAD)
+          ======================================================== */}
+      {showAddCatalogModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Edit Course</h2>
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[95vh] overflow-y-auto">
+            <form onSubmit={handleAddCatalogCourse} className="p-6 space-y-6">
+              <div className="flex justify-between items-center border-b pb-4">
+                <h2 className="text-2xl font-bold text-gray-900">Add Course to Public Catalog</h2>
                 <button
-                  onClick={() => setShowEditModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  type="button"
+                  onClick={() => {
+                    setShowAddCatalogModal(false)
+                    resetCatalogForm()
+                  }}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
                 >
                   ✕
                 </button>
               </div>
 
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Name *
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Course Title *
                     </label>
                     <input
                       type="text"
-                      value={newCourse.name}
-                      onChange={(e) => setNewCourse({...newCourse, name: e.target.value})}
+                      value={catalogForm.name}
+                      onChange={(e) => setCatalogForm({ ...catalogForm, name: e.target.value })}
                       required
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                      placeholder="e.g. CBSE 11-12 (Commerce)"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Instructor *
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category *
                     </label>
                     <select
-                      value={newCourse.instructorName}
-                      onChange={(e) => setNewCourse({...newCourse, instructorName: e.target.value})}
+                      value={catalogForm.category}
+                      onChange={(e) => setCatalogForm({ ...catalogForm, category: e.target.value })}
                       required
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
                     >
-                      <option value="">Select Instructor</option>
-                      {instructorOptions.map((instructor) => (
-                        <option key={instructor.id} value={instructor.name}>
-                          {instructor.name}
-                        </option>
+                      <option value="School Level">School Level</option>
+                      <option value="Commerce">Commerce</option>
+                      <option value="Competition">Competition</option>
+                      <option value="General">General</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Language Medium *
+                    </label>
+                    <select
+                      value={catalogForm.language}
+                      onChange={(e) => setCatalogForm({ ...catalogForm, language: e.target.value })}
+                      required
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    >
+                      <option value="Hindi">Hindi Medium</option>
+                      <option value="English">English Medium</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Fee structure *
+                    </label>
+                    <input
+                      type="text"
+                      value={catalogForm.fee}
+                      onChange={(e) => setCatalogForm({ ...catalogForm, fee: e.target.value })}
+                      required
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                      placeholder="e.g. ₹2,500 - 7,500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Duration *
+                    </label>
+                    <input
+                      type="text"
+                      value={catalogForm.duration}
+                      onChange={(e) => setCatalogForm({ ...catalogForm, duration: e.target.value })}
+                      required
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                      placeholder="e.g. 1 Year"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tag / Badge
+                    </label>
+                    <input
+                      type="text"
+                      value={catalogForm.tag}
+                      onChange={(e) => setCatalogForm({ ...catalogForm, tag: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                      placeholder="e.g. Most Popular"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Instructor Name
+                    </label>
+                    <select
+                      value={catalogForm.instructor}
+                      onChange={(e) => setCatalogForm({ ...catalogForm, instructor: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    >
+                      {instructorOptions.map(inst => (
+                        <option key={inst.id} value={inst.name}>{inst.name}</option>
                       ))}
-                      <option value="other">Other</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Subjects Covered (Comma separated)
                   </label>
-                  <textarea
-                    value={newCourse.description}
-                    onChange={(e) => setNewCourse({...newCourse, description: e.target.value})}
-                    rows={4}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  <input
+                    type="text"
+                    value={catalogForm.subjects}
+                    onChange={(e) => setCatalogForm({ ...catalogForm, subjects: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    placeholder="e.g. Accounts, Economics, English"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status *
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Key Features (Comma separated)
                   </label>
-                  <select
-                    value={newCourse.status}
-                    onChange={(e) => setNewCourse({...newCourse, status: e.target.value})}
-                    required
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
+                  <input
+                    type="text"
+                    value={catalogForm.features}
+                    onChange={(e) => setCatalogForm({ ...catalogForm, features: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    placeholder="e.g. Daily Live Classes, Study Material, Mock Tests"
+                  />
                 </div>
 
-                <div className="flex justify-end space-x-4 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowEditModal(false)}
-                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleEditCourse}
-                    disabled={loading}
-                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50"
-                  >
-                    {loading ? 'Updating...' : 'Update Course'}
-                  </button>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Syllabus / Brochure PDF File
+                  </label>
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={(e) => setSyllabusFile(e.target.files[0])}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Select a PDF detailing the course outline. Maximum size: 10MB.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description *
+                  </label>
+                  <textarea
+                    value={catalogForm.description}
+                    onChange={(e) => setCatalogForm({ ...catalogForm, description: e.target.value })}
+                    required
+                    rows="3"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    placeholder="Brief description of the course..."
+                  />
                 </div>
               </div>
-            </div>
+
+              <div className="flex justify-end gap-3 border-t pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddCatalogModal(false)
+                    resetCatalogForm()
+                  }}
+                  className="px-5 py-2 border rounded-lg hover:bg-gray-50 text-gray-700 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || uploadingSyllabus}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50"
+                >
+                  {loading ? 'Saving...' : uploadingSyllabus ? 'Uploading PDF...' : 'Add Course'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          MODAL: EDIT COURSE CATALOG (WITH PDF UPLOAD)
+          ======================================================== */}
+      {showEditCatalogModal && selectedCourse && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[95vh] overflow-y-auto">
+            <form onSubmit={handleEditCatalogCourse} className="p-6 space-y-6">
+              <div className="flex justify-between items-center border-b pb-4">
+                <h2 className="text-2xl font-bold text-gray-900">Edit Catalog Course</h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditCatalogModal(false)
+                    resetCatalogForm()
+                  }}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Course Title *
+                    </label>
+                    <input
+                      type="text"
+                      value={catalogForm.name}
+                      onChange={(e) => setCatalogForm({ ...catalogForm, name: e.target.value })}
+                      required
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category *
+                    </label>
+                    <select
+                      value={catalogForm.category}
+                      onChange={(e) => setCatalogForm({ ...catalogForm, category: e.target.value })}
+                      required
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    >
+                      <option value="School Level">School Level</option>
+                      <option value="Commerce">Commerce</option>
+                      <option value="Competition">Competition</option>
+                      <option value="General">General</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Language Medium *
+                    </label>
+                    <select
+                      value={catalogForm.language}
+                      onChange={(e) => setCatalogForm({ ...catalogForm, language: e.target.value })}
+                      required
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    >
+                      <option value="Hindi">Hindi Medium</option>
+                      <option value="English">English Medium</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Fee structure *
+                    </label>
+                    <input
+                      type="text"
+                      value={catalogForm.fee}
+                      onChange={(e) => setCatalogForm({ ...catalogForm, fee: e.target.value })}
+                      required
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Duration *
+                    </label>
+                    <input
+                      type="text"
+                      value={catalogForm.duration}
+                      onChange={(e) => setCatalogForm({ ...catalogForm, duration: e.target.value })}
+                      required
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tag / Badge
+                    </label>
+                    <input
+                      type="text"
+                      value={catalogForm.tag}
+                      onChange={(e) => setCatalogForm({ ...catalogForm, tag: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Instructor Name
+                    </label>
+                    <select
+                      value={catalogForm.instructor}
+                      onChange={(e) => setCatalogForm({ ...catalogForm, instructor: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    >
+                      {instructorOptions.map(inst => (
+                        <option key={inst.id} value={inst.name}>{inst.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Subjects Covered (Comma separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={catalogForm.subjects}
+                    onChange={(e) => setCatalogForm({ ...catalogForm, subjects: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Key Features (Comma separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={catalogForm.features}
+                    onChange={(e) => setCatalogForm({ ...catalogForm, features: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Replace Syllabus / Brochure PDF File
+                  </label>
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={(e) => setSyllabusFile(e.target.files[0])}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                  />
+                  {catalogForm.syllabusUrl && (
+                    <p className="text-xs text-green-600 mt-1">
+                      Current PDF uploaded. Uploading a new file will replace it.
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Status *
+                    </label>
+                    <select
+                      value={catalogForm.status}
+                      onChange={(e) => setCatalogForm({ ...catalogForm, status: e.target.value })}
+                      required
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description *
+                  </label>
+                  <textarea
+                    value={catalogForm.description}
+                    onChange={(e) => setCatalogForm({ ...catalogForm, description: e.target.value })}
+                    required
+                    rows="3"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 border-t pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditCatalogModal(false)
+                    resetCatalogForm()
+                  }}
+                  className="px-5 py-2 border rounded-lg hover:bg-gray-50 text-gray-700 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || uploadingSyllabus}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50"
+                >
+                  {loading ? 'Saving...' : uploadingSyllabus ? 'Uploading PDF...' : 'Update Course'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

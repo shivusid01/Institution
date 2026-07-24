@@ -729,7 +729,7 @@ const PaymentRecords = () => {
                           payment.status === 'completed'
                             ? 'bg-green-100 text-green-800 border border-green-200'
                             : payment.status === 'failed'
-                            ? 'bg-red-100 text-red-800 border border-red-200'
+                            ? 'bg-red-100 text-blue-800 border border-blue-200'
                             : payment.status === 'refunded'
                             ? 'bg-blue-100 text-blue-800 border border-blue-200'
                             : 'bg-gray-100 text-gray-800 border border-gray-200'
@@ -749,7 +749,7 @@ const PaymentRecords = () => {
                           {payment.status === 'completed' && !payment.refunds?.length && (
                             <button
                               onClick={() => handleRefund(payment)}
-                              className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
+                              className="text-red-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
                             >
                               <span>↩️</span>
                               Refund

@@ -12,7 +12,7 @@ const Documents = () => {
   // Only allow authenticated users (not public)
   if (!isAuthenticated || !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-purple-50 py-12 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-50 py-12 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-lg shadow-lg p-8 text-center">
             <h1 className="text-3xl font-bold text-gray-800 mb-4">📚 Study Materials</h1>
@@ -30,7 +30,7 @@ const Documents = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-purple-50 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-50 py-12 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header Section */}
         <div className="mb-8">
@@ -44,7 +44,7 @@ const Documents = () => {
             {user && (user.role === 'admin' || user.role === 'teacher') && (
               <button
                 onClick={() => setShowUploadForm(!showUploadForm)}
-                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-red-600 to-purple-900 text-white rounded-lg hover:shadow-lg font-medium transition-all duration-300"
+                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-900 text-white rounded-lg hover:shadow-lg font-medium transition-all duration-300"
               >
                 <span className="text-xl">📤</span>
                 <span>{showUploadForm ? 'Cancel' : 'Upload PDF'}</span>

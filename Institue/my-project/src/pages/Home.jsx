@@ -22,20 +22,20 @@ const Home = () => {
   // Loading Animation
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <div className="relative">
             <div
-              className="w-20 h-20 border-4 border-red-200 border-t-red-600 rounded-full mx-auto mb-6"
+              className="w-20 h-20 border-4 border-blue-200 border-t-red-600 rounded-full mx-auto mb-6"
             />
             <div
               className="absolute inset-0 flex items-center justify-center"
             >
-              <div className="w-8 h-8 bg-gradient-to-r from-red-600 to-purple-900 rounded-full"></div>
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-900 rounded-full"></div>
             </div>
           </div>
           <h2 
-            className="text-2xl font-bold bg-gradient-to-r from-red-600 to-purple-900 bg-clip-text text-transparent"
+            className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-900 bg-clip-text text-transparent"
           >
             Welcome to Sharma Institute...
           </h2>
@@ -60,7 +60,7 @@ const Home = () => {
       
       {/* Call to Action */}
       <section 
-        className="py-16 bg-gradient-to-r from-red-600 to-purple-900"
+        className="py-16 bg-gradient-to-r from-blue-600 to-blue-900"
       >
         <div className="container mx-auto px-4 text-center">
           <h2 
@@ -69,7 +69,7 @@ const Home = () => {
             Ready to Start Your Journey?
           </h2>
           <p 
-            className="text-red-100 mb-8 max-w-2xl mx-auto"
+            className="text-blue-100 mb-8 max-w-2xl mx-auto"
           >
             Join thousands of successful students who achieved their dreams with our guidance.
           </p>
@@ -78,13 +78,13 @@ const Home = () => {
           >
               <Link 
     to="/signup" 
-  className="btn-primary bg-gradient-to-r from-red-600 to-purple-900 text-white hover:from-red-700 hover:to-purple-950 hover:shadow-xl hover:scale-105 transition-all duration-300 text-center py-3 px-8 rounded-xl font-bold text-lg"
+  className="btn-primary bg-gradient-to-r from-blue-600 to-blue-900 text-white hover:from-blue-700 hover:to-blue-950 hover:shadow-xl hover:scale-105 transition-all duration-300 text-center py-3 px-8 rounded-xl font-bold text-lg"
   >
     Get Started Free
   </Link>
   <Link 
     to="/courses" 
-    className="btn-secondary bg-gradient-to-r from-red-100 to-purple-100 text-red-800 hover:text-red-900 hover:from-red-200 hover:to-purple-200 hover:shadow-lg hover:scale-105 border border-red-200 transition-all duration-300 text-center py-3 px-8 rounded-xl font-bold text-lg"
+    className="btn-secondary bg-gradient-to-r from-blue-100 to-blue-100 text-blue-800 hover:text-blue-900 hover:from-blue-200 hover:to-blue-200 hover:shadow-lg hover:scale-105 border border-blue-200 transition-all duration-300 text-center py-3 px-8 rounded-xl font-bold text-lg"
   >
     Browse Courses
   </Link>

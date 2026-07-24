@@ -118,7 +118,7 @@ const login = async (req, res, next) => {
     }
 
     // Safe status check
-    if (user.status && user.status !== 'active') {
+    if (user.status && user.status !== 'active' && user.status !== 'completed') {
       return res.status(403).json({
         success: false,
         message: 'Your account has been deactivated. Please contact admin.',
@@ -551,6 +551,398 @@ const changePassword = async (req, res, next) => {
   return updatePassword(req, res, next);
 };
 
+// @desc    Google Login
+// @route   POST /api/auth/google-login
+// @access  Public
+const googleLogin = async (req, res, next) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google credential is required'
+      });
+    }
+
+    let email, name, picture;
+
+    if (credential.startsWith('mock-token-')) {
+      email = credential.replace('mock-token-', '');
+      name = email.split('@')[0];
+      picture = '';
+      console.log('⚡ Mock Google Token received for:', email);
+    } else {
+      // Verify token with Google's tokeninfo API
+      const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+      const payload = await response.json();
+
+      if (!response.ok || payload.error_description) {
+        console.error('Google token verification failed:', payload.error_description || 'Invalid token');
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid Google token'
+        });
+      }
+
+      email = payload.email;
+      name = payload.name;
+      picture = payload.picture;
+    }
+
+    // Check if user already exists
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // Safe status check
+      if (user.status && user.status !== 'active' && user.status !== 'completed') {
+        return res.status(403).json({
+          success: false,
+          message: 'Your account has been deactivated. Please contact admin.'
+        });
+      }
+
+      user.lastLogin = new Date();
+      await user.save();
+    } else {
+      // Register a new user
+      user = await User.create({
+        name,
+        email,
+        password: Math.random().toString(36).slice(-10), // Random placeholder password
+        role: 'student',
+        isVerified: true,
+        profileImage: picture || ''
+      });
+      console.log('🆕 Created new user via Google Sign-up:', email);
+    }
+
+    // Generate JWT token
+    const token = generateToken({
+      id: user._id,
+      role: user.role,
+      email: user.email,
+    });
+
+    user.password = undefined;
+
+    res.status(200).json({
+      success: true,
+      token,
+      user,
+      message: 'Google login successful'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Send OTP to phone for password reset
+// @route   POST /api/auth/send-otp
+// @access  Public
+const sendOTP = async (req, res, next) => {
+  try {
+    const { phone } = req.body;
+
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number is required'
+      });
+    }
+
+    const user = await User.findOne({ phone });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'No user registered with this phone number'
+      });
+    }
+
+    // Generate a 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Set OTP and Expiry (5 minutes)
+    user.otpCode = otp;
+    user.otpExpires = Date.now() + 5 * 60 * 1000;
+    await user.save();
+
+    console.log(`\n=============================================`);
+    console.log(`🔑 [OTP Verification] OTP: ${otp} sent to ${phone}`);
+    console.log(`=============================================\n`);
+
+    const responseData = {
+      success: true,
+      message: 'OTP sent successfully to your phone number'
+    };
+
+    // Return the OTP in development mode for easy testing
+    if (process.env.NODE_ENV === 'development') {
+      responseData.otp = otp;
+    }
+
+    res.status(200).json(responseData);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Reset password using OTP
+// @route   POST /api/auth/reset-password-otp
+// @access  Public
+const resetPasswordOTP = async (req, res, next) => {
+  try {
+    const { phone, otp, newPassword } = req.body;
+
+    if (!phone || !otp || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number, OTP and new password are required'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long'
+      });
+    }
+
+    // Find user with matching phone, otp, and active expiry
+    const user = await User.findOne({
+      phone,
+      otpCode: otp,
+      otpExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired OTP'
+      });
+    }
+
+    // Update password
+    user.password = newPassword;
+    user.otpCode = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successfully. You can now login with your new password.'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/* ======================================================
+   OTP-BASED LOGIN CONTROLLERS
+====================================================== */
+
+// @desc    Send OTP to phone for login
+// @route   POST /api/auth/send-login-otp
+// @access  Public
+const sendLoginOTP = async (req, res, next) => {
+  try {
+    const { phone } = req.body;
+
+    if (!phone || !/^[0-9]{10}$/.test(phone)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid 10-digit phone number'
+      });
+    }
+
+    // Generate a 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+    let user = await User.findOne({ phone });
+    let isNewUser = false;
+
+    if (user) {
+      // Safe status check
+      if (user.status && user.status !== 'active' && user.status !== 'completed') {
+        return res.status(403).json({
+          success: false,
+          message: 'Your account has been deactivated. Please contact admin.'
+        });
+      }
+      user.otpCode = otp;
+      user.otpExpires = otpExpires;
+      await user.save();
+      // Check if it's actually an unverified pending account
+      if (user.name === 'Pending Verification' || !user.isVerified) {
+        isNewUser = true;
+      }
+    } else {
+      isNewUser = true;
+      // Create a temporary user with placeholder fields
+      // and isVerified: false so we know they are not fully registered yet.
+      user = await User.create({
+        name: 'Pending Verification',
+        email: `pending_${phone}@institution.com`,
+        phone,
+        password: Math.random().toString(36).slice(-10), // Random placeholder password
+        role: 'student',
+        isVerified: false,
+        otpCode: otp,
+        otpExpires: otpExpires
+      });
+    }
+
+    console.log(`\n=============================================`);
+    console.log(`🔑 [LOGIN OTP] OTP: ${otp} sent to ${phone} (${isNewUser ? 'NEW' : 'EXISTING'} USER)`);
+    console.log(`=============================================\n`);
+
+    const responseData = {
+      success: true,
+      message: 'OTP sent successfully to your mobile number',
+      isNewUser
+    };
+
+    // Return the OTP in development mode for easy testing
+    if (process.env.NODE_ENV === 'development') {
+      responseData.otp = otp;
+    }
+
+    res.status(200).json(responseData);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Verify OTP for login
+// @route   POST /api/auth/verify-login-otp
+// @access  Public
+const verifyLoginOTP = async (req, res, next) => {
+  try {
+    const { phone, otp } = req.body;
+
+    if (!phone || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number and OTP are required'
+      });
+    }
+
+    const user = await User.findOne({
+      phone,
+      otpCode: otp,
+      otpExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired OTP'
+      });
+    }
+
+    // Clear OTP fields
+    user.otpCode = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    // Check if the user is verified/registered
+    // If the name is 'Pending Verification' or isVerified is false, they need to complete registration
+    if (!user.isVerified || user.name === 'Pending Verification') {
+      return res.status(200).json({
+        success: true,
+        isNewUser: true,
+        message: 'OTP verified successfully. Please complete your registration.'
+      });
+    }
+
+    // Existing user: log in directly
+    user.lastLogin = new Date();
+    await user.save();
+
+    const token = generateToken({
+      id: user._id,
+      role: user.role,
+      email: user.email,
+    });
+
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res.status(200).json({
+      success: true,
+      isNewUser: false,
+      token,
+      user: userObj,
+      message: 'Login successful'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Complete OTP registration for new users
+// @route   POST /api/auth/complete-otp-registration
+// @access  Public
+const completeOTPRegistration = async (req, res, next) => {
+  try {
+    const { phone, name, email, course } = req.body;
+
+    if (!phone || !name || !email || !course) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone, name, email and course/class are required'
+      });
+    }
+
+    const user = await User.findOne({ phone });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User session not found. Please request OTP again.'
+      });
+    }
+
+    // Check if email is already taken by another user
+    const emailTaken = await User.findOne({
+      email: email.toLowerCase(),
+      _id: { $ne: user._id }
+    });
+
+    if (emailTaken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email address is already registered by another account'
+      });
+    }
+
+    // Update user details and mark as verified/registered
+    user.name = name;
+    user.email = email.toLowerCase();
+    user.course = course;
+    user.isVerified = true;
+    user.lastLogin = new Date();
+    await user.save();
+
+    const token = generateToken({
+      id: user._id,
+      role: user.role,
+      email: user.email,
+    });
+
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res.status(200).json({
+      success: true,
+      token,
+      user: userObj,
+      message: 'Registration and login successful'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
   register,
@@ -563,7 +955,13 @@ module.exports = {
   forgotPassword,
   resetPassword,
   verifyEmail,
-  getProfile,      // Add this
+  getProfile,
   updateProfile,
-  uploadProfileImage
+  uploadProfileImage,
+  googleLogin,
+  sendOTP,
+  resetPasswordOTP,
+  sendLoginOTP,
+  verifyLoginOTP,
+  completeOTPRegistration
 };

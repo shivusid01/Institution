@@ -44,6 +44,14 @@ const StudentProfile = () => {
   const [imagePreview, setImagePreview] = useState(null)
   const [uploadingImage, setUploadingImage] = useState(false)
 
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http')) return imagePath;
+    const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const baseUrl = apiURL.replace('/api', '');
+    return `${baseUrl}${imagePath}`;
+  };
+
   // Fetch profile data
   useEffect(() => {
     fetchProfile()
@@ -378,7 +386,7 @@ const StudentProfile = () => {
         <div className={`mb-6 p-4 rounded-lg ${
           message.type === 'success' 
             ? 'bg-green-50 text-green-800 border border-green-200'
-            : 'bg-red-50 text-red-800 border border-red-200'
+            : 'bg-red-50 text-blue-800 border border-blue-200'
         }`}>
           {message.text}
         </div>
@@ -416,7 +424,7 @@ const StudentProfile = () => {
                         />
                       ) : profile?.profileImage ? (
                         <img 
-                          src={profile.profileImage} 
+                          src={getImageUrl(profile.profileImage)} 
                           alt="Profile" 
                           className="h-full w-full object-cover"
                         />
@@ -674,7 +682,7 @@ const StudentProfile = () => {
                     <div className="h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
                       {profile?.profileImage ? (
                         <img 
-                          src={profile.profileImage} 
+                          src={getImageUrl(profile.profileImage)} 
                           alt="Profile" 
                           className="h-full w-full object-cover"
                         />
@@ -797,7 +805,7 @@ const StudentProfile = () => {
                           profile?.status === 'active'
                             ? 'bg-green-100 text-green-800'
                             : profile?.status === 'inactive'
-                            ? 'bg-red-100 text-red-800'
+                            ? 'bg-red-100 text-blue-800'
                             : 'bg-gray-100 text-gray-800'
                         }`}>
                           {profile?.status?.toUpperCase() || 'UNKNOWN'}
@@ -873,18 +881,18 @@ const StudentProfile = () => {
                 </div>
               </div>
               
-              <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-blue-50/50 rounded-lg">
                 <div>
-                  <p className="text-sm text-purple-700">Member Since</p>
-                  <p className="text-lg font-bold text-purple-800">
+                  <p className="text-sm text-blue-700">Member Since</p>
+                  <p className="text-lg font-bold text-blue-800">
                     {formatDate(profile?.enrollmentDate || profile?.createdAt)}
                   </p>
-                  <p className="text-xs text-purple-600">
+                  <p className="text-xs text-blue-600">
                     {profile?.enrollmentDate ? 'Enrollment date' : 'Registration date'}
                   </p>
                 </div>
-                <div className="p-3 rounded-full bg-purple-100">
-                  <span className="text-purple-600">📅</span>
+                <div className="p-3 rounded-full bg-blue-100">
+                  <span className="text-blue-600">📅</span>
                 </div>
               </div>
             </div>
@@ -921,19 +929,8 @@ const StudentProfile = () => {
             </div>
           </div>
 
-          {/* Contact Admin */}
-          <div className="bg-blue-50 rounded-xl border border-blue-200 p-6">
-            <h3 className="text-lg font-bold text-blue-900 mb-3">Need Help?</h3>
-            <p className="text-blue-700 text-sm mb-4">
-              If any information is incorrect or needs updating, contact your admin.
-            </p>
-            <button
-              onClick={() => setShowContactModal(true)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg"
-            >
-              Contact Admin
-            </button>
-          </div>
+          
+          
         </div>
       </div>
 
@@ -1008,63 +1005,7 @@ const StudentProfile = () => {
         </div>
       )}
 
-      {/* Contact Admin Modal */}
-      {showContactModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h2 className="text-2xl font-bold mb-4">Contact Admin</h2>
-            <form onSubmit={handleContactAdmin}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Subject *
-                  </label>
-                  <input
-                    type="text"
-                    value={contactData.subject}
-                    onChange={(e) => setContactData({...contactData, subject: e.target.value})}
-                    required
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Message *
-                  </label>
-                  <textarea
-                    value={contactData.message}
-                    onChange={(e) => setContactData({...contactData, message: e.target.value})}
-                    required
-                    rows="5"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowContactModal(false)
-                    setContactData({ subject: '', message: '' })
-                  }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={sendingContact}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {sendingContact ? 'Sending...' : 'Send Message'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      
     </div>
   )
 }

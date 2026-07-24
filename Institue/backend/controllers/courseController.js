@@ -75,25 +75,40 @@ const createCourse = async (req, res, next) => {
       category,
       instructor,
       status = 'active',
-      classType = 'course'
+      classType = 'course',
+      fee,
+      duration,
+      language = 'Hindi',
+      tag,
+      syllabusUrl,
+      subjects,
+      features
     } = req.body;
     
-    // Check if course already exists
-    const courseExists = await Course.findOne({ name });
-    if (courseExists) {
-      return res.status(400).json({
-        success: false,
-        message: 'Course/Class with this name already exists'
+    // Check if course already exists by name and language
+    let course = await Course.findOne({ name, language });
+    if (course) {
+      return res.status(200).json({
+        success: true,
+        course,
+        message: 'Course/Class already exists'
       });
     }
     
-    const course = await Course.create({
+    course = await Course.create({
       name,
       description,
       category,
       instructor,
       status,
-      classType
+      classType,
+      fee,
+      duration,
+      language,
+      tag,
+      syllabusUrl,
+      subjects,
+      features
     });
     
     res.status(201).json({
@@ -124,7 +139,8 @@ const updateCourse = async (req, res, next) => {
     const updatableFields = [
       'name', 'description', 'category', 'fee', 'duration',
       'instructor', 'subjects', 'features', 'batches',
-      'status', 'startDate', 'endDate', 'thumbnail'
+      'status', 'startDate', 'endDate', 'thumbnail',
+      'language', 'tag', 'syllabusUrl', 'classType'
     ];
     
     updatableFields.forEach(field => {

@@ -33,6 +33,10 @@ const noticeSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  instructor: {
+    type: String,
+    default: ''
+  },
   status: {
     type: String,
     enum: ['draft', 'published', 'archived'],
