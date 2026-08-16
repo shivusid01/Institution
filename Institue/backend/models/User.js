@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-
+const Counter = require('./Counter');
 const userSchema = new mongoose.Schema({
   // ===== BASIC INFO =====
   name: {
@@ -182,20 +182,28 @@ userSchema.pre('save', async function(next) {
   if (this.isNew && this.role === 'student' && !this.enrollmentId) {
     try {
       const year = new Date().getFullYear();
-      const count = await this.constructor.countDocuments({
-        role: 'student',
-        enrollmentDate: {
-          $gte: new Date(`${year}-01-01`),
-          $lte: new Date(`${year}-12-31`)
+      const counterId = `student-${year}`;
+
+      const counter = await Counter.findOneAndUpdate(
+        { _id: counterId },
+        { $inc: { sequence: 1 } },
+        {
+          new: true,
+          upsert: true,
+          setDefaultsOnInsert: true
         }
-      });
-      this.enrollmentId = `STU${year}${String(count + 1).padStart(4, '0')}`;
-    } catch {
-      const random = Math.floor(1000 + Math.random() * 9000);
-      this.enrollmentId = `STU${new Date().getFullYear()}${random}`;
+      );
+
+      this.enrollmentId = `STU${year}${String(counter.sequence).padStart(4, '0')}`;
+
+      next();
+    } catch (error) {
+      console.error('Enrollment ID generation error:', error);
+      next(error);
     }
+  } else {
+    next();
   }
-  next();
 });
 
 
