@@ -46,7 +46,7 @@ const registerStudent = async (req, res) => {
     }
 
     // Generate enrollment ID
-    const enrollmentId = `ENR${Date.now().toString().slice(-6)}${Math.random().toString(36).substr(2, 3).toUpperCase()}`;
+   
 
     // ✅ Create student in database
     const student = new User({
@@ -56,7 +56,6 @@ const registerStudent = async (req, res) => {
       parentPhone,
       class: studentClass,
       address,
-      enrollmentId: enrollmentId,
       enrollmentDate: enrollmentDate || new Date(),
       password: 'welcome123', // Default password
       role: 'student',
