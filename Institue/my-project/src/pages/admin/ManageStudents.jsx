@@ -244,15 +244,19 @@ Instructions:
 
     try {
       setActionLoading('delete-' + studentId)
+      console.log(`🗑️ Initiating delete for student ${studentId} (${studentName})`)
       const response = await userAPI.deleteStudent(studentId)
       
       if (response.data.success) {
         alert('✅ Student deleted successfully')
         fetchStudents()
+      } else {
+        alert(`❌ Deletion failed: ${response.data.message || 'Unknown error'}`)
       }
     } catch (error) {
-      console.error('Delete error:', error)
-      alert('Failed to delete student')
+      console.error('❌ Delete error:', error)
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to delete student. Please try again.'
+      alert(`❌ Delete failed: ${errorMsg}`)
     } finally {
       setActionLoading(null)
     }

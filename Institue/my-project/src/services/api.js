@@ -149,7 +149,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: import.meta.env.VITE_API_URL || 'https://try-sharma-1.onrender.com/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -255,7 +255,25 @@ export const userAPI = {
   getAllStudents: () => api.get('/users/students'),
   getStudent: (id) => api.get(`/users/students/${id}`),
   updateStudent: (id, data) => api.put(`/users/students/${id}`, data),
-  deleteStudent: (id) => api.delete(`/users/students/${id}`),
+  deleteStudent: (id) => {
+    const endpoint = `/users/students/${id}`;
+    const fullUrl = `${api.defaults.baseURL || ''}${endpoint}`;
+    console.log(`📡 [API] Sending DELETE request to: ${fullUrl}`);
+    return api.delete(endpoint)
+      .then(response => {
+        console.log(`✅ [API] DELETE success (status ${response.status}):`, response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error(`❌ [API] DELETE error for student ${id}:`, {
+          url: fullUrl,
+          status: error.response?.status,
+          message: error.response?.data?.message || error.message,
+          data: error.response?.data
+        });
+        throw error;
+      });
+  },
   
   // ✅ Student Registration by Admin
   registerStudent: (data) => {

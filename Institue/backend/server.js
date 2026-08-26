@@ -40,15 +40,28 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps, curl, etc.)
+      // Allow requests with no origin (like mobile apps, curl, Postman, etc.)
       if (!origin) return callback(null, true);
       
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        console.log("🛡️ CORS blocked origin:", origin);
-        return callback(new Error("Not allowed by CORS"));
+      try {
+        const hostname = new URL(origin).hostname;
+        const isAllowed = 
+          allowedOrigins.includes(origin) ||
+          (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) ||
+          hostname.endsWith('.vercel.app') ||
+          hostname.endsWith('.onrender.com') ||
+          hostname === 'localhost' ||
+          hostname === '127.0.0.1';
+
+        if (isAllowed) {
+          return callback(null, true);
+        }
+      } catch (err) {
+        console.error('CORS origin parsing error:', err);
       }
+
+      console.log("🛡️ CORS blocked origin:", origin);
+      return callback(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

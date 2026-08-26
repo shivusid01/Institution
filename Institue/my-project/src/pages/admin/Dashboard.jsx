@@ -263,14 +263,18 @@ const isFormValid = () => {
     }
 
     try {
+      console.log(`🗑️ Initiating delete for student ${studentId}`)
       const response = await userAPI.deleteStudent(studentId)
       if (response.data.success) {
-        alert('Student deleted successfully')
+        alert('✅ Student deleted successfully')
         fetchAllStudents()
+      } else {
+        alert(`❌ Deletion failed: ${response.data.message || 'Unknown error'}`)
       }
     } catch (error) {
-      console.error('Delete error:', error)
-      alert('Failed to delete student')
+      console.error('❌ Delete error:', error)
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to delete student. Please try again.'
+      alert(`❌ Delete failed: ${errorMsg}`)
     }
   }
 
@@ -282,7 +286,7 @@ Name: ${student.name}
 Enrollment ID: ${student.enrollmentId}
 Email: ${student.email}
 Password: welcome123
-Login URL: http://localhost:5173/login
+Login URL: ${window.location.origin}/login
 
 Instructions:
 1. Use Enrollment ID or Email to login
