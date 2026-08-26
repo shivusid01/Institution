@@ -29,6 +29,7 @@ import ManageStudents from './pages/admin/ManageStudents'
 // import ClassControl from './pages/admin/ClassControl'
 import PaymentRecords from './pages/admin/PaymentRecords'
 import NoticesManagement from './pages/admin/NoticesManagement'
+import ManageMembers from './pages/admin/ManageMembers'
 // import Reports from './pages/admin/Reports'
 
 import { AuthProvider, useAuth } from './context/AuthContext'
@@ -93,6 +94,7 @@ function App() {
                 {/* <Route path="/admin/classes" element={<ClassControl />} /> */}
                 <Route path="/admin/payments" element={<PaymentRecords />} />
                 <Route path="/admin/notices" element={<NoticesManagement />} />
+                <Route path="/admin/members" element={<ManageMembers />} />
                 {/* <Route path="/admin/reports" element={<Reports />} /> */}
               </Route>
               

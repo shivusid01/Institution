@@ -414,4 +414,13 @@ export const documentAPI = {
   deleteDocument: (documentId) => api.delete(`/documents/${documentId}`)
 };
 
+// ================= MEMBER APIs =================
+export const memberAPI = {
+  getAllMembers: (params) => api.get('/members', { params }),
+  getMember: (id) => api.get(`/members/${id}`),
+  createMember: (data) => api.post('/members', data),
+  updateMember: (id, data) => api.put(`/members/${id}`, data),
+  deleteMember: (id) => api.delete(`/members/${id}`)
+};
+
 export default api;

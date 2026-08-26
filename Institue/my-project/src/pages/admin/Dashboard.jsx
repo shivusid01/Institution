@@ -714,6 +714,10 @@ Instructions:
                 <span className="text-3xl mb-2">📢</span>
                 <span className="font-medium text-center">Notices</span>
               </Link>
+              <Link to="/admin/members" className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 transition-colors">
+                <span className="text-3xl mb-2">👥</span>
+                <span className="font-medium text-center">Members</span>
+              </Link>
             </div>
           </div>
 
