@@ -60,9 +60,9 @@ const Signup = () => {
       const result = await googleLogin({ credential: response.credential });
       if (result && result.success) {
         if (result.user.role === "admin") {
-          window.location.href = "/admin/dashboard";
+          navigate("/admin/dashboard", { replace: true });
         } else {
-          window.location.href = "/student/dashboard";
+          navigate("/student/dashboard", { replace: true });
         }
       } else {
         setErrors({ general: result?.error || "Google sign up failed" });
@@ -94,9 +94,9 @@ const Signup = () => {
       if (result && result.success) {
         setShowMockGoogle(false);
         if (result.user.role === "admin") {
-          window.location.href = "/admin/dashboard";
+          navigate("/admin/dashboard", { replace: true });
         } else {
-          window.location.href = "/student/dashboard";
+          navigate("/student/dashboard", { replace: true });
         }
       } else {
         setMockError(result?.error || "Google Signup simulation failed");

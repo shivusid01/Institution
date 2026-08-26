@@ -630,9 +630,9 @@ Instructions:
                                 🔑
                               </button>
                               <Link
-                                to={`/admin/students/${student._id}`}
+                                to="/admin/students"
                                 className="text-green-600 hover:text-green-800 text-sm font-medium"
-                                title="Edit"
+                                title="Manage Students"
                               >
                                 ✏️
                               </Link>

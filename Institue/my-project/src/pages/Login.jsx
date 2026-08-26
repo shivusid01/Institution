@@ -76,9 +76,9 @@ const Login = () => {
       }
 
       if (result.user.role === "admin") {
-        window.location.href = "/admin/dashboard";
+        navigate("/admin/dashboard", { replace: true });
       } else {
-        window.location.href = "/student/dashboard";
+        navigate("/student/dashboard", { replace: true });
       }
     } catch (error) {
       setErrors({ general: "Login failed. Please try again." });
