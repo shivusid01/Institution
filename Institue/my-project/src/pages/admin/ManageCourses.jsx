@@ -1,7 +1,7 @@
 // src/pages/admin/ManageCourses.jsx
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { courseAPI, classAPI } from '../../services/api'
+import { courseAPI, classAPI, memberAPI } from '../../services/api'
 import { format } from 'date-fns'
 
 const ManageCourses = () => {
@@ -22,6 +22,8 @@ const ManageCourses = () => {
   // Data lists
   const [courses, setCourses] = useState([])
   const [upcomingClasses, setUpcomingClasses] = useState([])
+  const [members, setMembers] = useState([])
+  const [membersLoading, setMembersLoading] = useState(false)
 
   // Syllabus PDF upload states
   const [syllabusFile, setSyllabusFile] = useState(null)
@@ -36,14 +38,6 @@ const ManageCourses = () => {
       type: 'course',
       category: course.category
     }));
-
-
-  const instructorOptions = [
-    { id: 1, name: "Mr. Jeetlal Sharma" },
-    { id: 2, name: "Ashok Sharma" },
-    { id: 3, name: "Chandra Bhushan Kumar" },
-    { id: 4, name: "Meenu sharma" },
-  ];
 
   const durationOptions = [
     { value: 30, label: "30 minutes" },
@@ -75,7 +69,8 @@ const ManageCourses = () => {
     tag: '',
     subjects: '',
     features: '',
-    instructor: 'Mr. Jeetlal Sharma',
+    designation: '',
+    instructor: '',
     status: 'active',
     syllabusUrl: ''
   });
@@ -83,7 +78,46 @@ const ManageCourses = () => {
   useEffect(() => {
     fetchCourses()
     fetchUpcomingClasses()
+    fetchMembers()
   }, [])
+
+  const fetchMembers = async () => {
+    try {
+      setMembersLoading(true)
+      const response = await memberAPI.getAllMembers()
+      if (response.data.success) {
+        setMembers(response.data.members || [])
+      }
+    } catch (error) {
+      console.error('Error fetching members:', error)
+    } finally {
+      setMembersLoading(false)
+    }
+  }
+
+  // Filter members by selected designation
+  const getFilteredInstructors = (selectedDesignation) => {
+    if (!selectedDesignation) return [];
+    if (selectedDesignation === 'Teacher') {
+      return members.filter(m => m.designation && m.designation.trim().toLowerCase() === 'teacher');
+    }
+    if (selectedDesignation === 'Other') {
+      return members.filter(m => !m.designation || m.designation.trim().toLowerCase() !== 'teacher');
+    }
+    return members;
+  };
+
+  // Handle Designation Change
+  const handleDesignationChange = (newDesignation) => {
+    const validInstructors = getFilteredInstructors(newDesignation);
+    const isCurrentValid = validInstructors.some(m => m.name === catalogForm.instructor);
+
+    setCatalogForm(prev => ({
+      ...prev,
+      designation: newDesignation,
+      instructor: isCurrentValid ? prev.instructor : ''
+    }));
+  };
 
   const fetchCourses = async () => {
     try {
@@ -341,7 +375,8 @@ const ManageCourses = () => {
       tag: '',
       subjects: '',
       features: '',
-      instructor: 'Mr. Jeetlal Sharma',
+      designation: '',
+      instructor: '',
       status: 'active',
       syllabusUrl: ''
     });
@@ -576,6 +611,11 @@ const ManageCourses = () => {
                         <button
                           onClick={() => {
                             setSelectedCourse(course);
+                            const matchingMember = members.find(m => m.name === course.instructor);
+                            const memberDesignation = matchingMember
+                              ? (matchingMember.designation?.trim()?.toLowerCase() === 'teacher' ? 'Teacher' : 'Other')
+                              : (course.instructor ? 'Teacher' : '');
+
                             setCatalogForm({
                               name: course.name,
                               description: course.description || '',
@@ -586,7 +626,8 @@ const ManageCourses = () => {
                               tag: course.tag || '',
                               subjects: course.subjects ? course.subjects.join(', ') : '',
                               features: course.features ? course.features.join(', ') : '',
-                              instructor: course.instructor || 'Mr. Jeetlal Sharma',
+                              designation: memberDesignation,
+                              instructor: course.instructor || '',
                               status: course.status || 'active',
                               syllabusUrl: course.syllabusUrl || ''
                             });
@@ -685,8 +726,8 @@ const ManageCourses = () => {
                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
                     >
                       <option value="">Select Instructor</option>
-                      {instructorOptions.map(inst => (
-                        <option key={inst.id} value={inst.name}>{inst.name}</option>
+                      {members.map(inst => (
+                        <option key={inst._id} value={inst.name}>{inst.name} ({inst.designation})</option>
                       ))}
                     </select>
                   </div>
@@ -891,7 +932,7 @@ const ManageCourses = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Tag / Badge
@@ -907,16 +948,45 @@ const ManageCourses = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Instructor Name
+                      Designation *
+                    </label>
+                    <select
+                      value={catalogForm.designation}
+                      onChange={(e) => handleDesignationChange(e.target.value)}
+                      required
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    >
+                      <option value="">Select Designation</option>
+                      <option value="Teacher">Teacher</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Instructor Name *
                     </label>
                     <select
                       value={catalogForm.instructor}
                       onChange={(e) => setCatalogForm({ ...catalogForm, instructor: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                      disabled={!catalogForm.designation}
+                      required
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
-                      {instructorOptions.map(inst => (
-                        <option key={inst.id} value={inst.name}>{inst.name}</option>
-                      ))}
+                      {!catalogForm.designation ? (
+                        <option value="">Select Designation First</option>
+                      ) : membersLoading ? (
+                        <option value="">Loading Members...</option>
+                      ) : getFilteredInstructors(catalogForm.designation).length === 0 ? (
+                        <option value="">No {catalogForm.designation}s found</option>
+                      ) : (
+                        <>
+                          <option value="">Select Instructor</option>
+                          {getFilteredInstructors(catalogForm.designation).map(inst => (
+                            <option key={inst._id} value={inst.name}>{inst.name}</option>
+                          ))}
+                        </>
+                      )}
                     </select>
                   </div>
                 </div>
@@ -1098,7 +1168,7 @@ const ManageCourses = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Tag / Badge
@@ -1113,16 +1183,45 @@ const ManageCourses = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Instructor Name
+                      Designation *
+                    </label>
+                    <select
+                      value={catalogForm.designation}
+                      onChange={(e) => handleDesignationChange(e.target.value)}
+                      required
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                    >
+                      <option value="">Select Designation</option>
+                      <option value="Teacher">Teacher</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Instructor Name *
                     </label>
                     <select
                       value={catalogForm.instructor}
                       onChange={(e) => setCatalogForm({ ...catalogForm, instructor: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5"
+                      disabled={!catalogForm.designation}
+                      required
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     >
-                      {instructorOptions.map(inst => (
-                        <option key={inst.id} value={inst.name}>{inst.name}</option>
-                      ))}
+                      {!catalogForm.designation ? (
+                        <option value="">Select Designation First</option>
+                      ) : membersLoading ? (
+                        <option value="">Loading Members...</option>
+                      ) : getFilteredInstructors(catalogForm.designation).length === 0 ? (
+                        <option value="">No {catalogForm.designation}s found</option>
+                      ) : (
+                        <>
+                          <option value="">Select Instructor</option>
+                          {getFilteredInstructors(catalogForm.designation).map(inst => (
+                            <option key={inst._id} value={inst.name}>{inst.name}</option>
+                          ))}
+                        </>
+                      )}
                     </select>
                   </div>
                 </div>
