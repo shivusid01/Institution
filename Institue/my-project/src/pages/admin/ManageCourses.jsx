@@ -95,16 +95,33 @@ const ManageCourses = () => {
     }
   }
 
+  // Dynamic list of designations from Members database
+  const dynamicDesignations = Array.from(new Set(
+    members.map(m => m.designation?.trim()).filter(Boolean)
+  ));
+
   // Filter members by selected designation
   const getFilteredInstructors = (selectedDesignation) => {
     if (!selectedDesignation) return [];
-    if (selectedDesignation === 'Teacher') {
+
+    const target = selectedDesignation.trim().toLowerCase();
+
+    if (target === 'teacher') {
       return members.filter(m => m.designation && m.designation.trim().toLowerCase() === 'teacher');
     }
-    if (selectedDesignation === 'Other') {
-      return members.filter(m => !m.designation || m.designation.trim().toLowerCase() !== 'teacher');
+
+    if (target === 'instructor') {
+      return members.filter(m => m.designation && m.designation.trim().toLowerCase() === 'instructor');
     }
-    return members;
+
+    if (target === 'other') {
+      return members.filter(m => {
+        const des = (m.designation || '').trim().toLowerCase();
+        return des !== 'teacher' && des !== 'instructor';
+      });
+    }
+
+    return members.filter(m => m.designation && m.designation.trim().toLowerCase() === target);
   };
 
   // Handle Designation Change
@@ -613,8 +630,8 @@ const ManageCourses = () => {
                             setSelectedCourse(course);
                             const matchingMember = members.find(m => m.name === course.instructor);
                             const memberDesignation = matchingMember
-                              ? (matchingMember.designation?.trim()?.toLowerCase() === 'teacher' ? 'Teacher' : 'Other')
-                              : (course.instructor ? 'Teacher' : '');
+                              ? matchingMember.designation?.trim()
+                              : (course.instructor ? 'Instructor' : '');
 
                             setCatalogForm({
                               name: course.name,
@@ -958,6 +975,13 @@ const ManageCourses = () => {
                     >
                       <option value="">Select Designation</option>
                       <option value="Teacher">Teacher</option>
+                      <option value="Instructor">Instructor</option>
+                      {dynamicDesignations
+                        .filter(d => d.toLowerCase() !== 'teacher' && d.toLowerCase() !== 'instructor')
+                        .map(d => (
+                          <option key={d} value={d}>{d}</option>
+                        ))
+                      }
                       <option value="Other">Other</option>
                     </select>
                   </div>
@@ -1193,6 +1217,13 @@ const ManageCourses = () => {
                     >
                       <option value="">Select Designation</option>
                       <option value="Teacher">Teacher</option>
+                      <option value="Instructor">Instructor</option>
+                      {dynamicDesignations
+                        .filter(d => d.toLowerCase() !== 'teacher' && d.toLowerCase() !== 'instructor')
+                        .map(d => (
+                          <option key={d} value={d}>{d}</option>
+                        ))
+                      }
                       <option value="Other">Other</option>
                     </select>
                   </div>
