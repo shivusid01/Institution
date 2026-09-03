@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sharma-institute.vercel.app/sitemap.xml
