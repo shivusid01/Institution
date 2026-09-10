@@ -505,11 +505,17 @@ const updateProfile = async (req, res) => {
 // @access  Private
 const uploadProfileImage = async (req, res) => {
   try {
-    // Check if file was uploaded
-    if (!req.file) {
+    let profileImagePath = '';
+    if (req.file) {
+      profileImagePath = `/uploads/profiles/${req.file.filename}`;
+    } else if (req.body && req.body.profileImageBase64) {
+      profileImagePath = req.body.profileImageBase64;
+    }
+
+    if (!profileImagePath && !req.file) {
       return res.status(400).json({
         success: false,
-        message: 'No image file provided'
+        message: 'No image file or base64 data provided'
       });
     }
 
@@ -523,7 +529,7 @@ const uploadProfileImage = async (req, res) => {
     }
 
     // Update user's profile image path
-    user.profileImage = `/uploads/profiles/${req.file.filename}`;
+    user.profileImage = profileImagePath;
     await user.save();
 
     res.status(200).json({

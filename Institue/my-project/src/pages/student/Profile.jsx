@@ -308,18 +308,21 @@ const StudentProfile = () => {
       
       const formData = new FormData()
       formData.append('profileImage', selectedImage)
+      if (imagePreview) {
+        formData.append('profileImageBase64', imagePreview)
+      }
       
       const response = await authAPI.uploadProfileImage(formData)
       
       if (response.data.success) {
-        const newImg = response.data.data.profileImage
-        // Update profile with new image URL
+        const newImg = response.data.data.profileImage || imagePreview;
+        // Update profile with new image URL or base64 preview
         setProfile(prev => ({
           ...prev,
           profileImage: newImg
         }))
         if (updateUser) {
-          updateUser({ profileImage: newImg })
+          updateUser({ profileImage: imagePreview || newImg })
         }
         
         // Clear image states

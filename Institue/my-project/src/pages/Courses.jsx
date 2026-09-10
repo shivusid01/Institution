@@ -47,6 +47,8 @@ const Courses = () => {
       filtered = dbCourses.filter(course => course.language === 'Hindi')
     } else if (activeCategory === 'english') {
       filtered = dbCourses.filter(course => course.language === 'English')
+    } else if (activeCategory === 'bilingual') {
+      filtered = dbCourses.filter(course => course.language === 'Bilingual' || course.language?.toLowerCase()?.includes('bilingual'))
     } else if (activeCategory === 'commerce') {
       filtered = dbCourses.filter(course => course.category?.toLowerCase() === 'commerce')
     } else if (activeCategory === 'competition') {
@@ -62,6 +64,7 @@ const Courses = () => {
     { name: 'All Courses', count: dbCourses.length, value: 'all' },
     { name: 'Hindi Medium', count: dbCourses.filter(c => c.language === 'Hindi').length, value: 'hindi' },
     { name: 'English Medium', count: dbCourses.filter(c => c.language === 'English').length, value: 'english' },
+    { name: 'Bilingual', count: dbCourses.filter(c => c.language === 'Bilingual' || c.language?.toLowerCase()?.includes('bilingual')).length, value: 'bilingual' },
     { name: 'Commerce', count: dbCourses.filter(c => c.category?.toLowerCase() === 'commerce').length, value: 'commerce' },
     { name: 'Competition', count: dbCourses.filter(c => c.category?.toLowerCase() === 'competition' || c.category?.toLowerCase() === 'competitive exams').length, value: 'competition' },
     { name: 'School Level', count: dbCourses.filter(c => c.category?.toLowerCase() === 'school level' || c.category?.toLowerCase() === 'school').length, value: 'school' }

@@ -917,6 +917,7 @@ const ManageCourses = () => {
                     >
                       <option value="Hindi">Hindi Medium</option>
                       <option value="English">English Medium</option>
+                      <option value="Bilingual">Bilingual (Hindi + English)</option>
                     </select>
                   </div>
 
