@@ -188,19 +188,30 @@ exports.downloadDocument = async (req, res) => {
     document.downloads += 1;
     await document.save();
 
-    // Construct file path
-    const filePath = path.join(__dirname, '..', document.fileUrl);
+    // Construct file path with multiple fallback attempts
+    let filePath = path.join(__dirname, '..', document.fileUrl);
+    if (!fs.existsSync(filePath)) {
+      filePath = path.join(__dirname, '../uploads/documents', document.fileName);
+    }
+    if (!fs.existsSync(filePath)) {
+      filePath = path.join(process.cwd(), document.fileUrl);
+    }
+    if (!fs.existsSync(filePath)) {
+      filePath = path.join(process.cwd(), 'uploads/documents', document.fileName);
+    }
 
     // Check if file exists
     if (!fs.existsSync(filePath)) {
+      console.error(`❌ PDF File not found on server. Document ID: ${documentId}, fileUrl: ${document.fileUrl}`);
       return res.status(404).json({
         success: false,
         message: 'File not found on server'
       });
     }
 
-    // Send file
-    res.download(filePath, document.fileName);
+    // Send file with friendly name
+    const downloadName = document.fileName || `${document.title || 'document'}.pdf`;
+    res.download(filePath, downloadName);
   } catch (error) {
     res.status(500).json({
       success: false,

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-import logo from '../assets/img.svg'
+import logo from '../assets/logo.jpg'
 
 const Navbar = () => {
   const { user, loading, logout, isAuthenticated } = useAuth()
@@ -16,8 +16,9 @@ const Navbar = () => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http')) return imagePath;
     const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-    const baseUrl = apiURL.replace('/api', '');
-    return `${baseUrl}${imagePath}`;
+    const baseUrl = apiURL.replace(/\/api\/?$/, '');
+    const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+    return `${baseUrl}${cleanPath}`;
   };
 
   // Handle scroll effect
@@ -102,11 +103,14 @@ const Navbar = () => {
                   className={`flex items-center space-x-3 transition-opacity ${user.role === 'student' ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'}`}
                 >
                   <div className="h-10 w-10 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center shadow-sm relative overflow-hidden">
-                    {user.profileImage ? (
+                    {(user.profileImage || user.profilePic || user.profilePicture || user.avatar) ? (
                       <img 
-                        src={getImageUrl(user.profileImage)} 
+                        src={getImageUrl(user.profileImage || user.profilePic || user.profilePicture || user.avatar)} 
                         alt="Profile" 
                         className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
                       />
                     ) : (
                       <span className="text-blue-800 font-bold text-lg">
@@ -299,11 +303,14 @@ const Navbar = () => {
                 <div className="flex flex-col space-y-2">
                   <div className="px-4 py-2 bg-[#1a5b8c] rounded-lg flex items-center space-x-3">
                     <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
-                      {user.profileImage ? (
+                      {(user.profileImage || user.profilePic || user.profilePicture || user.avatar) ? (
                         <img 
-                          src={getImageUrl(user.profileImage)} 
+                          src={getImageUrl(user.profileImage || user.profilePic || user.profilePicture || user.avatar)} 
                           alt="Profile" 
                           className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
                         />
                       ) : (
                         <span className="text-blue-800 font-bold text-sm">

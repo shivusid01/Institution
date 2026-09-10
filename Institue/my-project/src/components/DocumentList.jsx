@@ -129,20 +129,44 @@ const DocumentList = ({ userRole }) => {
     })
   }
 
-  const handleDownload = async (documentId, fileName) => {
+  const handleDownload = async (documentId, fileName, fileUrl) => {
     try {
       const response = await documentAPI.downloadDocument(documentId)
-      const url = window.URL.createObjectURL(new Blob([response.data]))
+      
+      // Check if response is actually a JSON error message returned as a Blob
+      if (response.data && response.data.type === 'application/json') {
+        const text = await response.data.text()
+        try {
+          const json = JSON.parse(text)
+          alert(`⚠️ ${json.message || 'Failed to download document'}`)
+          return
+        } catch (e) {
+          // not json, proceed
+        }
+      }
+
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', fileName)
+      const downloadName = fileName || 'document.pdf';
+      link.setAttribute('download', downloadName.endsWith('.pdf') ? downloadName : `${downloadName}.pdf`)
       document.body.appendChild(link)
       link.click()
       link.parentNode.removeChild(link)
       window.URL.revokeObjectURL(url)
     } catch (err) {
       console.error('Error downloading document:', err)
-      alert('Failed to download document')
+      // Fallback: direct window.open
+      if (fileUrl) {
+        const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const baseUrl = apiURL.replace(/\/api\/?$/, '');
+        const cleanPath = fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`;
+        const fullUrl = fileUrl.startsWith('http') ? fileUrl : `${baseUrl}${cleanPath}`;
+        window.open(fullUrl, '_blank');
+      } else {
+        alert('Failed to download document. Please try again.')
+      }
     }
   }
 
@@ -314,8 +338,8 @@ const DocumentList = ({ userRole }) => {
                 {/* Download/Delete Buttons */}
                 <div className="flex gap-2">
                   <button
-                    onClick={() => handleDownload(doc._id, doc.fileName)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition"
+                    onClick={() => handleDownload(doc._id, doc.fileName || doc.title, doc.fileUrl)}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition cursor-pointer"
                   >
                     <span>⬇️</span>
                     Download

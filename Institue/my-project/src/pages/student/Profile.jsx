@@ -65,6 +65,9 @@ const StudentProfile = () => {
       if (response.data.success) {
         const profileData = response.data.data
         setProfile(profileData)
+        if (updateUser) {
+          updateUser(profileData)
+        }
         
         // Set form data - ensure all fields are properly mapped
         setFormData({
@@ -309,11 +312,15 @@ const StudentProfile = () => {
       const response = await authAPI.uploadProfileImage(formData)
       
       if (response.data.success) {
+        const newImg = response.data.data.profileImage
         // Update profile with new image URL
         setProfile(prev => ({
           ...prev,
-          profileImage: response.data.data.profileImage
+          profileImage: newImg
         }))
+        if (updateUser) {
+          updateUser({ profileImage: newImg })
+        }
         
         // Clear image states
         setSelectedImage(null)

@@ -51,26 +51,56 @@ const UploadDocument = ({ onSuccess }) => {
     }))
   }
 
+  const [isDragging, setIsDragging] = useState(false)
+
+  const processSelectedFile = (file) => {
+    if (!file) return false;
+    // Check if file is PDF
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      setError('Please select a PDF file')
+      return false;
+    }
+    // Check file size (max 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      setError('File size must be less than 50MB')
+      return false;
+    }
+    setFormData(prev => ({
+      ...prev,
+      file: file
+    }))
+    setError('')
+    return true;
+  }
+
   const handleFileChange = (e) => {
     const file = e.target.files[0]
     if (file) {
-      // Check if file is PDF
-      if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
-        setError('Please select a PDF file')
+      if (!processSelectedFile(file)) {
         e.target.value = '' // Clear the file input
-        return
       }
-      // Check file size (max 50MB)
-      if (file.size > 50 * 1024 * 1024) {
-        setError('File size must be less than 50MB')
-        e.target.value = '' // Clear the file input
-        return
-      }
-      setFormData(prev => ({
-        ...prev,
-        file: file
-      }))
-      setError('')
+    }
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0]
+      processSelectedFile(file)
     }
   }
 
@@ -230,22 +260,32 @@ const UploadDocument = ({ onSuccess }) => {
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             PDF File <span className="text-red-500">*</span>
           </label>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-red-500 transition">
+          <div 
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-lg p-6 text-center transition cursor-pointer ${
+              isDragging 
+                ? 'border-blue-600 bg-blue-50/60 scale-[1.01]' 
+                : 'border-gray-300 hover:border-blue-600 bg-gray-50/30'
+            }`}
+          >
             <input
               id="fileInput"
               type="file"
               accept=".pdf"
               onChange={handleFileChange}
               className="hidden"
-              required
             />
-            <label htmlFor="fileInput" className="cursor-pointer">
-              <div className="text-4xl mb-2">📄</div>
-              <p className="text-gray-600">Click to select PDF or drag and drop</p>
+            <label htmlFor="fileInput" className="cursor-pointer block w-full h-full">
+              <div className="text-4xl mb-2">{isDragging ? '📥' : '📄'}</div>
+              <p className="text-gray-700 font-medium">
+                {isDragging ? 'Drop your PDF here now' : 'Click to select PDF or drag and drop'}
+              </p>
               <p className="text-xs text-gray-500 mt-1">Max size: 50MB</p>
               {formData.file && (
                 <p className="text-sm text-green-600 mt-2 font-semibold">
-                  ✅ {formData.file.name}
+                  ✅ Selected: {formData.file.name}
                 </p>
               )}
             </label>
