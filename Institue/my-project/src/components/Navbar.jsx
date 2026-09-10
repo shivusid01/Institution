@@ -5,6 +5,33 @@ import { useAuth } from '../context/AuthContext'
 
 import logo from '../assets/logo.jpg'
 
+const UserAvatar = ({ user, getImageUrl, isMobile = false }) => {
+  const [imageError, setImageError] = useState(false);
+  const profilePic = user?.profileImage || user?.profilePic || user?.profilePicture || user?.avatar;
+  const initial = user?.name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U';
+
+  const containerClass = isMobile
+    ? "h-8 w-8 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center overflow-hidden flex-shrink-0"
+    : "h-10 w-10 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center shadow-sm relative overflow-hidden flex-shrink-0";
+
+  const textClass = isMobile ? "text-blue-800 font-bold text-sm" : "text-blue-800 font-bold text-lg";
+
+  return (
+    <div className={containerClass}>
+      {profilePic && !imageError ? (
+        <img 
+          src={getImageUrl(profilePic)} 
+          alt="Profile" 
+          className="h-full w-full object-cover"
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <span className={textClass}>{initial}</span>
+      )}
+    </div>
+  );
+};
+
 const Navbar = () => {
   const { user, loading, logout, isAuthenticated } = useAuth()
   const navigate = useNavigate()
@@ -14,7 +41,7 @@ const Navbar = () => {
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
-    if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith('http') || imagePath.startsWith('data:')) return imagePath;
     const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     const baseUrl = apiURL.replace(/\/api\/?$/, '');
     const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
@@ -56,15 +83,11 @@ const Navbar = () => {
   // Loading state with animation
   if (loading) {
     return (
-      <nav 
-        className="bg-white shadow-lg"
-      >
+      <nav className="bg-white shadow-lg">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center space-x-3">
-              <div 
-                className="h-12 w-12 bg-gradient-to-r from-blue-200 to-blue-200 rounded-xl animate-pulse"
-              />
+              <div className="h-12 w-12 bg-gradient-to-r from-blue-200 to-blue-200 rounded-xl animate-pulse" />
               <div className="h-7 w-40 bg-gradient-to-r from-gray-200 to-gray-300 rounded animate-pulse"></div>
             </div>
             <div className="h-7 w-32 bg-gradient-to-r from-gray-200 to-gray-300 rounded animate-pulse"></div>
@@ -102,22 +125,7 @@ const Navbar = () => {
                   to={user.role === 'student' ? '/student/profile' : '#'} 
                   className={`flex items-center space-x-3 transition-opacity ${user.role === 'student' ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'}`}
                 >
-                  <div className="h-10 w-10 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center shadow-sm relative overflow-hidden">
-                    {(user.profileImage || user.profilePic || user.profilePicture || user.avatar) ? (
-                      <img 
-                        src={getImageUrl(user.profileImage || user.profilePic || user.profilePicture || user.avatar)} 
-                        alt="Profile" 
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <span className="text-blue-800 font-bold text-lg">
-                        {user.name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'U'}
-                      </span>
-                    )}
-                  </div>
+                  <UserAvatar user={user} getImageUrl={getImageUrl} />
                   <div className="text-right">
                     <p className="text-gray-800 font-medium text-sm">
                       {user.name || user.email}
@@ -302,22 +310,7 @@ const Navbar = () => {
               {isAuthenticated && user ? (
                 <div className="flex flex-col space-y-2">
                   <div className="px-4 py-2 bg-[#1a5b8c] rounded-lg flex items-center space-x-3">
-                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
-                      {(user.profileImage || user.profilePic || user.profilePicture || user.avatar) ? (
-                        <img 
-                          src={getImageUrl(user.profileImage || user.profilePic || user.profilePicture || user.avatar)} 
-                          alt="Profile" 
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <span className="text-blue-800 font-bold text-sm">
-                          {user.name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'U'}
-                        </span>
-                      )}
-                    </div>
+                    <UserAvatar user={user} getImageUrl={getImageUrl} isMobile={true} />
                     <div>
                       <p className="text-xs text-blue-100 font-medium">Logged in as</p>
                       <p className="text-sm font-bold text-white leading-tight">{user.name || user.email}</p>

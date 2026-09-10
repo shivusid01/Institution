@@ -82,15 +82,28 @@ const UploadDocument = ({ onSuccess }) => {
     }
   }
 
+  const handleDragEnter = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy'
+    }
+    setIsDragging(true)
+  }
+
   const handleDragOver = (e) => {
     e.preventDefault()
     e.stopPropagation()
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy'
+    }
     setIsDragging(true)
   }
 
   const handleDragLeave = (e) => {
     e.preventDefault()
     e.stopPropagation()
+    if (e.currentTarget && e.currentTarget.contains(e.relatedTarget)) return
     setIsDragging(false)
   }
 
@@ -98,9 +111,21 @@ const UploadDocument = ({ onSuccess }) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(false)
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0]
-      processSelectedFile(file)
+
+    let droppedFiles = []
+    if (e.dataTransfer && e.dataTransfer.items) {
+      for (let i = 0; i < e.dataTransfer.items.length; i++) {
+        if (e.dataTransfer.items[i].kind === 'file') {
+          const file = e.dataTransfer.items[i].getAsFile()
+          if (file) droppedFiles.push(file)
+        }
+      }
+    } else if (e.dataTransfer && e.dataTransfer.files) {
+      droppedFiles = Array.from(e.dataTransfer.files)
+    }
+
+    if (droppedFiles.length > 0) {
+      processSelectedFile(droppedFiles[0])
     }
   }
 
@@ -261,12 +286,14 @@ const UploadDocument = ({ onSuccess }) => {
             PDF File <span className="text-red-500">*</span>
           </label>
           <div 
+            onDragEnter={handleDragEnter}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
+            onClick={() => document.getElementById('fileInput')?.click()}
             className={`border-2 border-dashed rounded-lg p-6 text-center transition cursor-pointer ${
               isDragging 
-                ? 'border-blue-600 bg-blue-50/60 scale-[1.01]' 
+                ? 'border-blue-600 bg-blue-100/70 scale-[1.02] shadow-md' 
                 : 'border-gray-300 hover:border-blue-600 bg-gray-50/30'
             }`}
           >
@@ -277,18 +304,18 @@ const UploadDocument = ({ onSuccess }) => {
               onChange={handleFileChange}
               className="hidden"
             />
-            <label htmlFor="fileInput" className="cursor-pointer block w-full h-full">
+            <div className="pointer-events-none">
               <div className="text-4xl mb-2">{isDragging ? '📥' : '📄'}</div>
               <p className="text-gray-700 font-medium">
-                {isDragging ? 'Drop your PDF here now' : 'Click to select PDF or drag and drop'}
+                {isDragging ? 'Release to drop your PDF file here' : 'Click to select PDF or drag and drop file here'}
               </p>
-              <p className="text-xs text-gray-500 mt-1">Max size: 50MB</p>
+              <p className="text-xs text-gray-500 mt-1">Max size: 50MB (.pdf files only)</p>
               {formData.file && (
                 <p className="text-sm text-green-600 mt-2 font-semibold">
-                  ✅ Selected: {formData.file.name}
+                  ✅ Selected File: {formData.file.name}
                 </p>
               )}
-            </label>
+            </div>
           </div>
         </div>
 
