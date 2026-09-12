@@ -1,4 +1,6 @@
-// backend/controllers/authController.js
+const fs = require('fs');
+const path = require('path');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const {
   generateToken,
@@ -500,19 +502,84 @@ const updateProfile = async (req, res) => {
   }
 };
 
+// Sync existing local disk profile images to Base64/GridFS on database connect
+const syncExistingProfilesToGridFS = async () => {
+  try {
+    if (!mongoose.connection || mongoose.connection.readyState !== 1 || !mongoose.connection.db) return;
+    const users = await User.find({ profileImage: { $regex: '/uploads/profiles/' } });
+    const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+      bucketName: 'profiles'
+    });
+
+    for (const user of users) {
+      if (!user.profileImage || !user.profileImage.startsWith('/uploads/profiles/')) continue;
+      const filename = path.basename(user.profileImage);
+      let filePath = path.join(__dirname, '../uploads/profiles', filename);
+      if (!fs.existsSync(filePath)) {
+        filePath = path.join(__dirname, '..', user.profileImage);
+      }
+
+      if (fs.existsSync(filePath)) {
+        // Upload to GridFS 'profiles' bucket if not present
+        const gridFiles = await bucket.find({ filename: filename }).toArray();
+        if (gridFiles.length === 0) {
+          const ext = path.extname(filename).toLowerCase();
+          const contentType = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+          const uploadStream = bucket.openUploadStream(filename, { contentType });
+          fs.createReadStream(filePath).pipe(uploadStream);
+          await new Promise((resolve) => uploadStream.on('finish', resolve).on('error', resolve));
+        }
+
+        // Convert user.profileImage to persistent Base64 so it never 404s
+        try {
+          const imageBuffer = fs.readFileSync(filePath);
+          const ext = path.extname(filename).toLowerCase();
+          const mimeType = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+          user.profileImage = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
+          await user.save();
+          console.log(`✅ Backed up profile image for ${user.email} to persistent Base64/GridFS`);
+        } catch (bErr) {
+          console.error('Base64 convert error:', bErr);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error syncing existing profiles to GridFS:', err);
+  }
+};
+
 // @desc    Upload profile image
 // @route   POST /api/auth/upload-profile-image
 // @access  Private
 const uploadProfileImage = async (req, res) => {
   try {
     let profileImagePath = '';
-    if (req.file) {
-      profileImagePath = `/uploads/profiles/${req.file.filename}`;
-    } else if (req.body && req.body.profileImageBase64) {
+
+    if (req.body && req.body.profileImageBase64) {
       profileImagePath = req.body.profileImageBase64;
+    } else if (req.file && req.file.path) {
+      // Read file buffer and convert to persistent Base64 Data URL so it never 404s on disk reset
+      const imageBuffer = fs.readFileSync(req.file.path);
+      const mimeType = req.file.mimetype || 'image/jpeg';
+      profileImagePath = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
+
+      // Stream file to GridFS 'profiles' bucket as a secondary backup
+      try {
+        if (mongoose.connection && mongoose.connection.readyState === 1 && mongoose.connection.db) {
+          const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+            bucketName: 'profiles'
+          });
+          const uploadStream = bucket.openUploadStream(req.file.filename, { contentType: mimeType });
+          fs.createReadStream(req.file.path).pipe(uploadStream);
+        }
+      } catch (gErr) {
+        console.error('GridFS profile stream error:', gErr);
+      }
+    } else if (req.file) {
+      profileImagePath = `/uploads/profiles/${req.file.filename}`;
     }
 
-    if (!profileImagePath && !req.file) {
+    if (!profileImagePath) {
       return res.status(400).json({
         success: false,
         message: 'No image file or base64 data provided'
@@ -964,6 +1031,7 @@ module.exports = {
   getProfile,
   updateProfile,
   uploadProfileImage,
+  syncExistingProfilesToGridFS,
   googleLogin,
   sendOTP,
   resetPasswordOTP,

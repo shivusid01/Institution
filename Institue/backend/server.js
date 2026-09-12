@@ -169,6 +169,43 @@ app.get('/uploads/documents/:filename', async (req, res, next) => {
   return res.send(Buffer.from(pdfHeader, 'binary'));
 });
 
+// Serve profile images with GridFS fallback if physical file missing on ephemeral disk
+app.get('/uploads/profiles/:filename', async (req, res, next) => {
+  const filePath = path.join(__dirname, 'uploads/profiles', req.params.filename);
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  // Stream from GridFS 'profiles' bucket
+  try {
+    if (mongoose.connection && mongoose.connection.readyState === 1 && mongoose.connection.db) {
+      const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+        bucketName: 'profiles'
+      });
+      const gridFiles = await bucket.find({ filename: req.params.filename }).toArray();
+      if (gridFiles.length > 0) {
+        const ext = path.extname(req.params.filename).toLowerCase();
+        const contentType = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(req.params.filename)}"`);
+        const downloadStream = bucket.openDownloadStream(gridFiles[0]._id);
+
+        try {
+          const cachePath = path.join(__dirname, 'uploads/profiles', req.params.filename);
+          const writeCacheStream = fs.createWriteStream(cachePath);
+          downloadStream.pipe(writeCacheStream).on('error', () => {});
+        } catch (cErr) {}
+
+        return downloadStream.pipe(res);
+      }
+    }
+  } catch (err) {
+    console.error('GridFS profile stream error in server.js:', err);
+  }
+
+  res.status(404).send('Profile image not found');
+});
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 /* ===================== DATABASE ===================== */
@@ -387,10 +424,12 @@ mongoose.connection.on('connected', () => {
   // Seed default courses
   seedCourses();
 
-  // Sync existing local disk document files to MongoDB GridFS
+  // Sync existing local disk document files and profile images to MongoDB GridFS
   try {
     const { syncExistingFilesToGridFS } = require('./controllers/documentController');
     syncExistingFilesToGridFS();
+    const { syncExistingProfilesToGridFS } = require('./controllers/authController');
+    syncExistingProfilesToGridFS();
   } catch (err) {
     console.error('Error initiating GridFS sync:', err);
   }
