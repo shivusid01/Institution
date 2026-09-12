@@ -31,6 +31,10 @@ const documentSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  gridFsId: {
+    type: mongoose.Schema.Types.ObjectId,
+    default: null
+  },
   uploadedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

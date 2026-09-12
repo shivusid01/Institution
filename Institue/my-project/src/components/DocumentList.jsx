@@ -90,7 +90,8 @@ const DocumentList = ({ userRole }) => {
     if (filters.classId) {
       filtered = filtered.filter(doc => {
         const docClassId = (doc.classId && typeof doc.classId === 'object') ? doc.classId._id : doc.classId;
-        return docClassId === filters.classId;
+        const docClassName = doc.className;
+        return docClassId === filters.classId || docClassName === filters.classId;
       })
     }
 
@@ -214,6 +215,21 @@ const DocumentList = ({ userRole }) => {
 
   return (
     <div className="space-y-6">
+      {/* Student Specific Notice Banner */}
+      {userRole === 'student' && (
+        <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-lg shadow-sm">
+          <div className="flex items-center">
+            <span className="text-2xl mr-3">🎓</span>
+            <div>
+              <h4 className="font-bold text-blue-900 text-base">Your Enrolled Class Documents</h4>
+              <p className="text-sm text-blue-700">
+                Showing study materials specifically uploaded for your class: <span className="font-semibold text-blue-900">{user?.course || user?.class || 'Your Class'}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-lg p-6">
         <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
