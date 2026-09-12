@@ -3,7 +3,8 @@ import { useAuth } from '../../context/AuthContext'
 import { authAPI, userAPI } from '../../services/api'
 
 const StudentProfile = () => {
-  const { currentUser, updateUser } = useAuth()
+  const { user, currentUser, updateUser } = useAuth()
+  const activeUser = user || currentUser
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
@@ -53,7 +54,7 @@ const StudentProfile = () => {
     return `${baseUrl}${cleanPath}`;
   };
 
-  const currentProfilePic = profile?.profileImage || user?.profileImage || user?.profilePic || user?.avatar;
+  const currentProfilePic = profile?.profileImage || activeUser?.profileImage || activeUser?.profilePic || activeUser?.avatar;
 
   // Fetch profile data
   useEffect(() => {
