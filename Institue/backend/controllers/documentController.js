@@ -195,7 +195,50 @@ exports.getAllDocuments = async (req, res) => {
         }
       }
 
-      studentClasses = Array.from(new Set(studentClasses.filter(Boolean)));
+      // Expand class variants (e.g. "B.COM 3rd Year" <-> "B.COM")
+      const expandClassVariants = (classList) => {
+        const expanded = new Set();
+        classList.forEach(cls => {
+          if (!cls) return;
+          const cleanCls = cls.trim();
+          expanded.add(cleanCls);
+          const lower = cleanCls.toLowerCase();
+
+          if (lower.includes('b.com') || lower.includes('bcom')) {
+            expanded.add('B.COM');
+            expanded.add('B.COM 1st Year');
+            expanded.add('B.COM 2nd Year');
+            expanded.add('B.COM 3rd Year');
+          }
+          if (lower.includes('m.com') || lower.includes('mcom')) {
+            expanded.add('M.COM');
+            expanded.add('M.COM 1st Year');
+            expanded.add('M.COM 2nd Year');
+          }
+          if (lower.includes('11') && lower.includes('commerce')) {
+            expanded.add('Class 11 (Commerce)');
+            expanded.add('CBSE 11-12 (Commerce)');
+            expanded.add('State Board 11-12 (Commerce)');
+          }
+          if (lower.includes('12') && lower.includes('commerce')) {
+            expanded.add('Class 12 (Commerce)');
+            expanded.add('CBSE 11-12 (Commerce)');
+            expanded.add('State Board 11-12 (Commerce)');
+          }
+          if (lower.includes('academic') || (lower.includes('class') && /[1-8]/.test(lower))) {
+            expanded.add('Academic (Class 1-8)');
+            ['1','2','3','4','5','6','7','8'].forEach(num => expanded.add(`Class ${num}`));
+          }
+          if (lower.includes('foundation') || lower.includes('class 9') || lower.includes('class 10')) {
+            expanded.add('Foundation (Class 9-10)');
+            expanded.add('Class 9');
+            expanded.add('Class 10');
+          }
+        });
+        return Array.from(expanded);
+      };
+
+      studentClasses = expandClassVariants(studentClasses);
 
       if (studentClasses.length > 0) {
         const escapeRegex = (string) => string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
