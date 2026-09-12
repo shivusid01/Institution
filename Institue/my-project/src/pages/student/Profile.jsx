@@ -279,39 +279,33 @@ const StudentProfile = () => {
 
   const [imageError, setImageError] = useState(false)
 
-  const handleImageChange = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setMessage({ type: 'error', text: 'Please select a valid image file' })
-      return
-    }
-    
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setMessage({ type: 'error', text: 'Image size should be less than 5MB' })
-      return
-    }
+  const handleImageUpload = async (fileToUpload = null, base64ToUpload = null) => {
+    const targetFile = fileToUpload || selectedImage
+    const targetBase64 = base64ToUpload || imagePreview
+    if (!targetFile && !targetBase64) return
 
     try {
       setUploadingImage(true)
       setMessage({ type: '', text: '' })
       setImageError(false)
 
-      const base64Data = await new Promise((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = (e) => resolve(e.target.result)
-        reader.onerror = (err) => reject(err)
-        reader.readAsDataURL(file)
-      })
-
-      setImagePreview(base64Data)
+      let base64Data = targetBase64
+      if (!base64Data && targetFile) {
+        base64Data = await new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = (e) => resolve(e.target.result)
+          reader.onerror = (err) => reject(err)
+          reader.readAsDataURL(targetFile)
+        })
+      }
 
       const formData = new FormData()
-      formData.append('profileImage', file)
-      formData.append('profileImageBase64', base64Data)
+      if (targetFile) {
+        formData.append('profileImage', targetFile)
+      }
+      if (base64Data) {
+        formData.append('profileImageBase64', base64Data)
+      }
 
       const response = await authAPI.uploadProfileImage(formData)
 
@@ -342,6 +336,35 @@ const StudentProfile = () => {
       setSelectedImage(null)
       setImagePreview(null)
     }
+  }
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setMessage({ type: 'error', text: 'Please select a valid image file' })
+      return
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'Image size should be less than 5MB' })
+      return
+    }
+
+    setSelectedImage(file)
+
+    const base64Data = await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => resolve(e.target.result)
+      reader.onerror = (err) => reject(err)
+      reader.readAsDataURL(file)
+    })
+
+    setImagePreview(base64Data)
+    await handleImageUpload(file, base64Data)
   }
 
   const formatDate = (dateString) => {
