@@ -277,78 +277,70 @@ const StudentProfile = () => {
     }
   }
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setMessage({ type: 'error', text: 'Please select a valid image file' })
-        return
-      }
-      
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setMessage({ type: 'error', text: 'Image size should be less than 5MB' })
-        return
-      }
-      
-      setSelectedImage(file)
-      const reader = new FileReader()
-      reader.onload = (e) => setImagePreview(e.target.result)
-      reader.readAsDataURL(file)
-    }
-  }
+  const [imageError, setImageError] = useState(false)
 
-  const handleImageUpload = async () => {
-    if (!selectedImage) return
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setMessage({ type: 'error', text: 'Please select a valid image file' })
+      return
+    }
     
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'Image size should be less than 5MB' })
+      return
+    }
+
     try {
       setUploadingImage(true)
       setMessage({ type: '', text: '' })
-      
+      setImageError(false)
+
+      const base64Data = await new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = (e) => resolve(e.target.result)
+        reader.onerror = (err) => reject(err)
+        reader.readAsDataURL(file)
+      })
+
+      setImagePreview(base64Data)
+
       const formData = new FormData()
-      formData.append('profileImage', selectedImage)
-      if (imagePreview) {
-        formData.append('profileImageBase64', imagePreview)
-      }
-      
+      formData.append('profileImage', file)
+      formData.append('profileImageBase64', base64Data)
+
       const response = await authAPI.uploadProfileImage(formData)
-      
-      if (response.data.success) {
-        const newImg = response.data.data.profileImage || imagePreview;
-        // Update profile with new image URL or base64 preview
+
+      if (response.data && response.data.success) {
+        const newImg = response.data.data.profileImage || base64Data
         setProfile(prev => ({
           ...prev,
           profileImage: newImg
         }))
         if (updateUser) {
-          updateUser({ profileImage: imagePreview || newImg })
+          updateUser({ profileImage: newImg })
         }
-        
-        // Clear image states
-        setSelectedImage(null)
-        setImagePreview(null)
-        
         setMessage({ type: 'success', text: 'Profile image updated successfully!' })
-        
-        // Refresh profile data
-        await fetchProfile()
-        
-        // Clear message after 3 seconds
         setTimeout(() => {
           setMessage({ type: '', text: '' })
         }, 3000)
       } else {
-        setMessage({ type: 'error', text: response.data.message || 'Failed to upload image' })
+        setMessage({ type: 'error', text: response.data?.message || 'Failed to upload image' })
       }
-    } catch (error) {
-      console.error('Image upload error:', error)
+    } catch (err) {
+      console.error('Image upload error:', err)
       setMessage({ 
         type: 'error', 
-        text: error.response?.data?.message || 'Failed to upload image' 
+        text: err.response?.data?.message || 'Failed to upload image' 
       })
     } finally {
       setUploadingImage(false)
+      setSelectedImage(null)
+      setImagePreview(null)
     }
   }
 
@@ -690,11 +682,12 @@ const StudentProfile = () => {
                   {/* Profile Image Section */}
                   <div className="relative mr-6">
                     <div className="h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
-                      {profile?.profileImage ? (
+                      {profile?.profileImage && !imageError ? (
                         <img 
                           src={getImageUrl(profile.profileImage)} 
                           alt="Profile" 
                           className="h-full w-full object-cover"
+                          onError={() => setImageError(true)}
                         />
                       ) : (
                         <span className="text-4xl text-blue-600 font-bold">
