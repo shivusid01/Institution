@@ -46,11 +46,14 @@ const StudentProfile = () => {
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return '';
-    if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith('http') || imagePath.startsWith('data:')) return imagePath;
     const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-    const baseUrl = apiURL.replace('/api', '');
-    return `${baseUrl}${imagePath}`;
+    const baseUrl = apiURL.replace(/\/api\/?$/, '');
+    const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+    return `${baseUrl}${cleanPath}`;
   };
+
+  const currentProfilePic = profile?.profileImage || user?.profileImage || user?.profilePic || user?.avatar;
 
   // Fetch profile data
   useEffect(() => {
@@ -59,7 +62,7 @@ const StudentProfile = () => {
 
   useEffect(() => {
     setImageError(false)
-  }, [profile?.profileImage])
+  }, [currentProfilePic])
 
   const fetchProfile = async () => {
     try {
@@ -451,15 +454,16 @@ const StudentProfile = () => {
                           alt="Preview" 
                           className="h-full w-full object-cover"
                         />
-                      ) : profile?.profileImage ? (
+                      ) : currentProfilePic && !imageError ? (
                         <img 
-                          src={getImageUrl(profile.profileImage)} 
+                          src={getImageUrl(currentProfilePic)} 
                           alt="Profile" 
                           className="h-full w-full object-cover"
+                          onError={() => setImageError(true)}
                         />
                       ) : (
-                        <span className="text-4xl text-blue-600 font-bold">
-                          {profile?.name?.charAt(0) || 'S'}
+                        <span className="text-4xl text-blue-600 font-bold font-mono">
+                          {profile?.name?.charAt(0)?.toUpperCase() || user?.name?.charAt(0)?.toUpperCase() || 'S'}
                         </span>
                       )}
                     </div>
@@ -709,16 +713,16 @@ const StudentProfile = () => {
                   {/* Profile Image Section */}
                   <div className="relative mr-6">
                     <div className="h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
-                      {profile?.profileImage && !imageError ? (
+                      {currentProfilePic && !imageError ? (
                         <img 
-                          src={getImageUrl(profile.profileImage)} 
+                          src={getImageUrl(currentProfilePic)} 
                           alt="Profile" 
                           className="h-full w-full object-cover"
                           onError={() => setImageError(true)}
                         />
                       ) : (
-                        <span className="text-4xl text-blue-600 font-bold">
-                          {profile?.name?.charAt(0) || 'S'}
+                        <span className="text-4xl text-blue-600 font-bold font-mono">
+                          {profile?.name?.charAt(0)?.toUpperCase() || user?.name?.charAt(0)?.toUpperCase() || 'S'}
                         </span>
                       )}
                     </div>
