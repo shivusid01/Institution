@@ -10,6 +10,10 @@ const UserAvatar = ({ user, getImageUrl, isMobile = false }) => {
   const profilePic = user?.profileImage || user?.profilePic || user?.profilePicture || user?.avatar;
   const initial = user?.name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U';
 
+  useEffect(() => {
+    setImageError(false);
+  }, [profilePic]);
+
   const containerClass = isMobile
     ? "h-8 w-8 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center overflow-hidden flex-shrink-0"
     : "h-10 w-10 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center shadow-sm relative overflow-hidden flex-shrink-0";

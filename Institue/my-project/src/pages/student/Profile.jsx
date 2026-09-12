@@ -57,6 +57,10 @@ const StudentProfile = () => {
     fetchProfile()
   }, [])
 
+  useEffect(() => {
+    setImageError(false)
+  }, [profile?.profileImage])
+
   const fetchProfile = async () => {
     try {
       setLoading(true)
