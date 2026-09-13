@@ -1,6 +1,6 @@
 // src/components/Navbar.jsx
 import React, { useState, useEffect } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 import logo from '../assets/logo.jpg'
@@ -107,7 +107,7 @@ const Navbar = () => {
       <div className="bg-white border-b border-gray-100 py-3">
         <div className="container mx-auto px-4 flex justify-between items-center">
           {/* Logo and Institution Title */}
-          <Link to="/" className="flex items-center space-x-3 group" onClick={() => setIsMobileMenuOpen(false)}>
+          <a href="/" className="flex items-center space-x-3 group" onClick={() => setIsMobileMenuOpen(false)}>
             <div className="relative">
               <img src={logo} alt="Sharma Institute" className="h-14 w-20 object-contain" />
             </div>
@@ -119,14 +119,14 @@ const Navbar = () => {
                 Excellence in Education
               </p>
             </div>
-          </Link>
+          </a>
 
           {/* Desktop Auth Section */}
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated && user ? (
               <div className="flex items-center space-x-4">
-                <Link 
-                  to={user.role === 'student' ? '/student/profile' : '#'} 
+                <a 
+                  href={user.role === 'student' ? '/student/profile' : '#'} 
                   className={`flex items-center space-x-3 transition-opacity ${user.role === 'student' ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'}`}
                 >
                   <UserAvatar user={user} getImageUrl={getImageUrl} />
@@ -138,7 +138,7 @@ const Navbar = () => {
                       {user.role}
                     </span>
                   </div>
-                </Link>
+                </a>
                 <button
                   onClick={handleLogout}
                   className="px-4 py-2 text-sm border border-gray-300 hover:border-blue-600 hover:text-blue-600 rounded-lg text-gray-600 transition-all font-medium duration-200"
@@ -148,18 +148,18 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="flex items-center space-x-3">
-                <Link 
-                  to="/login" 
+                <a 
+                  href="/login" 
                   className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-all duration-200"
                 >
                   Login
-                </Link>
-                <Link 
-                  to="/signup" 
+                </a>
+                <a 
+                  href="/signup" 
                   className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-sm hover:shadow transition-all duration-200"
                 >
                   Sign Up
-                </Link>
+                </a>
               </div>
             )}
           </div>
@@ -187,8 +187,8 @@ const Navbar = () => {
         <div className="container mx-auto px-4 flex justify-between items-center">
           <div className="flex items-center space-x-1 py-1">
             {/* Home Icon */}
-            <Link 
-              to="/"
+            <a 
+              href="/"
               className={`p-3 hover:bg-[#1a5b8c] transition-colors ${
                 location.pathname === '/' ? 'bg-[#1a5b8c]' : ''
               }`}
@@ -196,55 +196,55 @@ const Navbar = () => {
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
               </svg>
-            </Link>
+            </a>
 
             {/* Other Navigation Links */}
             {navItems.filter(item => item.path !== '/').map((item) => {
               const isActive = location.pathname === item.path
               return (
-                <Link 
+                <a 
                   key={item.path}
-                  to={item.path}
+                  href={item.path}
                   className={`px-5 py-3 font-medium text-sm transition-colors border-r border-blue-700/40 hover:bg-[#1a5b8c] ${
                     isActive ? 'bg-[#1a5b8c] font-semibold text-white' : 'text-blue-50'
                   }`}
                 >
                   {item.label}
-                </Link>
+                </a>
               )
             })}
             
             {/* Conditional Links based on Auth State */}
             {isAuthenticated && user && (
               <>
-                <Link 
-                  to="/documents" 
+                <a 
+                  href="/documents" 
                   className={`px-5 py-3 font-medium text-sm transition-colors border-r border-blue-700/40 hover:bg-[#1a5b8c] ${
                     location.pathname === '/documents' ? 'bg-[#1a5b8c] font-semibold text-white' : 'text-blue-50'
                   }`}
                 >
                   Study Materials
-                </Link>
+                </a>
                 
                 {user.role === 'student' && (
-                  <Link 
-                    to="/student/dashboard" 
+                  <a 
+                    href="/student/dashboard" 
                     className={`px-5 py-3 font-medium text-sm transition-colors border-r border-blue-700/40 hover:bg-[#1a5b8c] ${
                       location.pathname.startsWith('/student') ? 'bg-[#1a5b8c] font-semibold text-white' : 'text-blue-50'
                     }`}
                   >
                     Dashboard
-                  </Link>
+                  </a>
                 )}
                 {user.role === 'admin' && (
-                  <Link 
-                    to="/admin/dashboard" 
+                  <a 
+                    href="/admin/dashboard" 
                     className={`px-5 py-3 font-medium text-sm transition-colors border-r border-blue-700/40 hover:bg-[#1a5b8c] ${
                       location.pathname.startsWith('/admin') ? 'bg-[#1a5b8c] font-semibold text-white' : 'text-blue-50'
                     }`}
                   >
                     Admin Panel
-                  </Link>
+                  </a>
                 )}
               </>
             )}
@@ -259,52 +259,52 @@ const Navbar = () => {
             {navItems.map((item) => {
               const isActive = location.pathname === item.path
               return (
-                <Link 
+                <a 
                   key={item.path}
-                  to={item.path}
+                  href={item.path}
                   className={`px-4 py-2.5 rounded-lg text-base font-medium transition-all ${
                     isActive ? 'bg-[#1a5b8c] text-white' : 'text-blue-100 hover:bg-[#1a5b8c]/50'
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {item.label}
-                </Link>
+                </a>
               )
             })}
 
             {isAuthenticated && user && (
               <>
-                <Link 
-                  to="/documents" 
+                <a 
+                  href="/documents" 
                   className={`px-4 py-2.5 rounded-lg text-base font-medium transition-all ${
                     location.pathname === '/documents' ? 'bg-[#1a5b8c] text-white' : 'text-blue-100 hover:bg-[#1a5b8c]/50'
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Study Materials
-                </Link>
+                </a>
                 
                 {user.role === 'student' && (
-                  <Link 
-                    to="/student/dashboard" 
+                  <a 
+                    href="/student/dashboard" 
                     className={`px-4 py-2.5 rounded-lg text-base font-medium transition-all ${
                       location.pathname.startsWith('/student') ? 'bg-[#1a5b8c] text-white' : 'text-blue-100 hover:bg-[#1a5b8c]/50'
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Dashboard
-                  </Link>
+                  </a>
                 )}
                 {user.role === 'admin' && (
-                  <Link 
-                    to="/admin/dashboard" 
+                  <a 
+                    href="/admin/dashboard" 
                     className={`px-4 py-2.5 rounded-lg text-base font-medium transition-all ${
                       location.pathname.startsWith('/admin') ? 'bg-[#1a5b8c] text-white' : 'text-blue-100 hover:bg-[#1a5b8c]/50'
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Admin Panel
-                  </Link>
+                  </a>
                 )}
               </>
             )}
@@ -329,20 +329,20 @@ const Navbar = () => {
                 </div>
               ) : (
                 <div className="flex flex-col space-y-2">
-                  <Link 
-                    to="/login" 
+                  <a 
+                    href="/login" 
                     className="w-full py-2.5 bg-[#1a5b8c] text-center text-white rounded-lg font-medium"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Login
-                  </Link>
-                  <Link 
-                    to="/signup" 
+                  </a>
+                  <a 
+                    href="/signup" 
                     className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-center text-white rounded-lg font-medium"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Sign Up
-                  </Link>
+                  </a>
                 </div>
               )}
             </div>

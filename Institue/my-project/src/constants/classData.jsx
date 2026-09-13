@@ -24,13 +24,11 @@ export const DEFAULT_STUDENT_CLASSES = [
   { id: 'State Board 11-12 (Commerce)', name: 'State Board 11-12 (Commerce)', category: 'Commerce (Class 11-12)' },
 
   // B.COM
-  { id: 'B.COM', name: 'B.COM', category: 'B.COM' },
   { id: 'B.COM 1st Year', name: 'B.COM 1st Year', category: 'B.COM' },
   { id: 'B.COM 2nd Year', name: 'B.COM 2nd Year', category: 'B.COM' },
   { id: 'B.COM 3rd Year', name: 'B.COM 3rd Year', category: 'B.COM' },
 
   // M.COM
-  { id: 'M.COM', name: 'M.COM', category: 'M.COM' },
   { id: 'M.COM 1st Year', name: 'M.COM 1st Year', category: 'M.COM' },
   { id: 'M.COM 2nd Year', name: 'M.COM 2nd Year', category: 'M.COM' },
 
@@ -65,7 +63,9 @@ export const getGroupedClassOptions = (extraCourses = []) => {
       const courseName = typeof course === 'string' ? course : (course?.name || course?.title || course?.id)
       if (!courseName) return
 
-      const key = courseName.toLowerCase()
+      const key = courseName.toLowerCase().trim()
+      if (key === 'b.com' || key === 'bcom' || key === 'm.com' || key === 'mcom') return;
+
       if (!classMap.has(key)) {
         let category = (typeof course === 'object' && course?.category) ? course.category : 'General'
 
