@@ -17,6 +17,8 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
   })
   const [extraCourses, setExtraCourses] = useState([])
   const [previewDoc, setPreviewDoc] = useState(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [previewError, setPreviewError] = useState('')
 
   useEffect(() => {
     fetchCourses()
@@ -128,23 +130,58 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
     })
   }
 
-  const handleView = (doc) => {
-    const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-    const baseUrl = apiURL.replace(/\/api\/?$/, '');
-    let url = '';
-    if (doc._id) {
-      url = `${baseUrl}/api/documents/view/${doc._id}`;
-    } else if (doc.fileUrl) {
-      const cleanPath = doc.fileUrl.startsWith('/') ? doc.fileUrl : `/${doc.fileUrl}`;
-      url = doc.fileUrl.startsWith('http') ? doc.fileUrl : `${baseUrl}${cleanPath}`;
-    }
-
+  const handleView = async (doc) => {
+    setPreviewLoading(true)
+    setPreviewError('')
     setPreviewDoc({
       title: doc.title || 'Document Preview',
       topic: doc.topic || '',
       className: doc.className || '',
-      url: url
+      docId: doc._id,
+      blobUrl: null,
+      fileType: 'loading'
     })
+
+    try {
+      let response;
+      if (doc._id) {
+        response = await documentAPI.viewDocument(doc._id);
+      } else {
+        response = await documentAPI.downloadDocument(doc._id);
+      }
+
+      const contentType = response.headers['content-type'] || 'application/pdf';
+      const blob = new Blob([response.data], { type: contentType });
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      let fileType = 'pdf';
+      if (contentType.includes('image')) {
+        fileType = 'image';
+      } else if (contentType.includes('text') || contentType.includes('json')) {
+        fileType = 'text';
+      }
+
+      setPreviewDoc(prev => ({
+        ...prev,
+        blobUrl: blobUrl,
+        fileType: fileType,
+        contentType: contentType
+      }));
+    } catch (err) {
+      console.error('Error loading preview:', err);
+      setPreviewError('Unable to load inline preview for this file. You can still download it directly.');
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
+  const handleClosePreview = () => {
+    if (previewDoc && previewDoc.blobUrl) {
+      window.URL.revokeObjectURL(previewDoc.blobUrl);
+    }
+    setPreviewDoc(null);
+    setPreviewError('');
+    setPreviewLoading(false);
   }
 
   const handleDownload = async (documentId, fileName, fileUrl) => {
@@ -411,46 +448,71 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
 
       {/* Document Inline Preview Modal */}
       {previewDoc && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-sm p-2 sm:p-4 animate-fadeIn">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-2 sm:p-4 animate-fadeIn">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[92vh] flex flex-col overflow-hidden border border-gray-200">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-blue-900 to-blue-700 p-4 text-white flex justify-between items-center">
+            <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 p-4 text-white flex justify-between items-center shadow-md">
               <div className="flex items-center space-x-3 overflow-hidden pr-4">
                 <span className="text-2xl flex-shrink-0">📄</span>
                 <div className="truncate">
                   <h3 className="text-lg font-bold text-white truncate">{previewDoc.title}</h3>
                   <p className="text-xs text-blue-100 truncate">
-                    Topic: <span className="font-semibold">{previewDoc.topic}</span> {previewDoc.className && `| Class: ${previewDoc.className}`}
+                    Topic: <span className="font-semibold text-white">{previewDoc.topic}</span> {previewDoc.className && `| Class: ${previewDoc.className}`}
                   </p>
                 </div>
               </div>
               <div className="flex items-center space-x-2 flex-shrink-0">
-                <a
-                  href={previewDoc.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
-                >
-                  ↗️ Open Full Tab
-                </a>
                 <button
-                  onClick={() => setPreviewDoc(null)}
-                  className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-1.5 transition-colors"
+                  onClick={() => handleDownload(previewDoc.docId, previewDoc.title, null)}
+                  className="px-3.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <span>⬇️</span> Download File
+                </button>
+                <button
+                  onClick={handleClosePreview}
+                  className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors ml-1"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
             </div>
 
-            {/* Modal Body: Inline PDF / Image / Document Frame */}
-            <div className="flex-1 bg-gray-100 p-1 sm:p-2 relative overflow-hidden">
-              <iframe
-                src={previewDoc.url}
-                className="w-full h-full rounded-lg border-0 bg-white shadow-inner"
-                title={previewDoc.title}
-              />
+            {/* Modal Body: Blob Document Viewer */}
+            <div className="flex-1 bg-gray-900 p-2 relative overflow-hidden flex items-center justify-center">
+              {previewLoading ? (
+                <div className="text-center text-white p-8">
+                  <div className="animate-spin rounded-full h-14 w-14 border-t-2 border-b-2 border-blue-400 mx-auto mb-4"></div>
+                  <p className="text-gray-300 font-medium">Loading document preview...</p>
+                </div>
+              ) : previewError ? (
+                <div className="text-center bg-white/10 p-8 rounded-xl max-w-md text-white border border-white/20">
+                  <span className="text-4xl mb-3 block">⚠️</span>
+                  <p className="font-semibold text-lg mb-2">Preview Unavailable</p>
+                  <p className="text-sm text-gray-300 mb-6">{previewError}</p>
+                  <button
+                    onClick={() => handleDownload(previewDoc.docId, previewDoc.title, null)}
+                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold text-sm transition shadow-lg"
+                  >
+                    ⬇️ Download Document
+                  </button>
+                </div>
+              ) : previewDoc.fileType === 'image' ? (
+                <div className="w-full h-full flex items-center justify-center p-4">
+                  <img
+                    src={previewDoc.blobUrl}
+                    alt={previewDoc.title}
+                    className="max-h-full max-w-full object-contain rounded-lg shadow-2xl"
+                  />
+                </div>
+              ) : (
+                <iframe
+                  src={previewDoc.blobUrl}
+                  className="w-full h-full rounded-lg border-0 bg-white shadow-inner"
+                  title={previewDoc.title}
+                />
+              )}
             </div>
           </div>
         </div>

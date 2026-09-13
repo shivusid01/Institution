@@ -407,6 +407,11 @@ export const documentAPI = {
     responseType: 'blob'
   }),
 
+  // View document inline (as Blob)
+  viewDocument: (documentId) => api.get(`/documents/view/${documentId}`, {
+    responseType: 'blob'
+  }),
+
   // Update document
   updateDocument: (documentId, data) => api.put(`/documents/${documentId}`, data),
 
