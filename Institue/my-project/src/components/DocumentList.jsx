@@ -37,7 +37,8 @@ const PdfCanvasViewer = ({ arrayBuffer }) => {
           })
         }
 
-        const loadingTask = window.pdfjsLib.getDocument({ data: arrayBuffer })
+        const uint8Array = new Uint8Array(arrayBuffer)
+        const loadingTask = window.pdfjsLib.getDocument({ data: uint8Array })
         const pdf = await loadingTask.promise
         if (isMounted) {
           setPdfDoc(pdf)
@@ -309,34 +310,68 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
       }
 
       const rawBuffer = response.data;
-      const contentType = (response.headers['content-type'] || '').toLowerCase();
+      const uint8 = new Uint8Array(rawBuffer);
+      const headerStr = new TextDecoder().decode(uint8.subarray(0, 100));
 
-      if (contentType.includes('image')) {
-        const blob = new Blob([rawBuffer], { type: contentType });
+      // Check if server returned a JSON error response
+      if (headerStr.trim().startsWith('{') && headerStr.includes('"message"')) {
+        try {
+          const jsonErr = JSON.parse(new TextDecoder().decode(uint8));
+          setPreviewError(jsonErr.message || 'File error from server');
+          return;
+        } catch (e) {}
+      }
+
+      // Check magic numbers for file type detection
+      const isPdf = headerStr.includes('%PDF-');
+      const isJpeg = uint8[0] === 0xFF && uint8[1] === 0xD8;
+      const isPng = uint8[0] === 0x89 && uint8[1] === 0x50 && uint8[2] === 0x4E && uint8[3] === 0x47;
+      const isGif = uint8[0] === 0x47 && uint8[1] === 0x49 && uint8[2] === 0x46;
+      const isZipOrOffice = uint8[0] === 0x50 && uint8[1] === 0x4B; // PKzip (docx, xlsx, zip)
+
+      if (isPdf) {
+        setPreviewDoc(prev => ({
+          ...prev,
+          arrayBuffer: rawBuffer,
+          fileType: 'pdf'
+        }));
+      } else if (isJpeg || isPng || isGif) {
+        let mime = 'image/jpeg';
+        if (isPng) mime = 'image/png';
+        if (isGif) mime = 'image/gif';
+        const blob = new Blob([rawBuffer], { type: mime });
         const blobUrl = window.URL.createObjectURL(blob);
         setPreviewDoc(prev => ({
           ...prev,
           blobUrl,
           fileType: 'image'
         }));
-      } else if (contentType.includes('text') || contentType.includes('json')) {
-        const textContent = new TextDecoder().decode(rawBuffer);
+      } else if (isZipOrOffice) {
         setPreviewDoc(prev => ({
           ...prev,
-          textContent,
-          fileType: 'text'
+          fileType: 'office',
+          fileName: doc.fileName || doc.title
         }));
       } else {
-        // PDF or default document -> Render with HTML5 Canvas Viewer!
-        setPreviewDoc(prev => ({
-          ...prev,
-          arrayBuffer: rawBuffer,
-          fileType: 'pdf'
-        }));
+        // Try text or default
+        const textContent = new TextDecoder().decode(rawBuffer);
+        if (/^[\x20-\x7E\s\r\n]+$/.test(textContent.slice(0, 200))) {
+          setPreviewDoc(prev => ({
+            ...prev,
+            textContent,
+            fileType: 'text'
+          }));
+        } else {
+          setPreviewDoc(prev => ({
+            ...prev,
+            fileType: 'other',
+            fileName: doc.fileName || doc.title
+          }));
+        }
       }
     } catch (err) {
       console.error('Error loading preview:', err);
-      setPreviewError('Unable to fetch file for preview. Please click Download File below.');
+      setPreviewError('Unable to fetch file for preview. Click Download File below.');
     } finally {
       setPreviewLoading(false);
     }
@@ -646,7 +681,7 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
               </div>
             </div>
 
-            {/* Modal Body: Custom Renderers */}
+            {/* Modal Body: Intelligent Multi-Format Viewers */}
             <div className="flex-1 bg-gray-900 relative overflow-hidden flex items-center justify-center">
               {previewLoading ? (
                 <div className="text-center text-white p-8">
@@ -673,8 +708,23 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
                     className="max-h-full max-w-full object-contain rounded-lg shadow-2xl"
                   />
                 </div>
+              ) : previewDoc.fileType === 'office' ? (
+                <div className="text-center bg-white/10 p-8 rounded-xl max-w-md text-white border border-white/20">
+                  <span className="text-5xl mb-4 block">📊</span>
+                  <h4 className="text-lg font-bold text-white mb-2">{previewDoc.fileName || previewDoc.title}</h4>
+                  <p className="text-sm text-gray-300 mb-6">
+                    This file format (Excel/Office document) cannot be rendered as a PDF preview on canvas. Click below to download and open it on your device.
+                  </p>
+                  <button
+                    onClick={() => handleDownload(previewDoc.docId, previewDoc.title, null)}
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-sm transition shadow-lg flex items-center justify-center mx-auto space-x-2"
+                  >
+                    <span>⬇️</span>
+                    <span>Download Excel / Office File</span>
+                  </button>
+                </div>
               ) : previewDoc.fileType === 'text' ? (
-                <div className="w-full h-full p-4 overflow-auto bg-gray-950 text-green-400 font-mono text-sm">
+                <div className="w-full h-full p-6 overflow-auto bg-gray-950 text-green-400 font-mono text-sm">
                   <pre className="whitespace-pre-wrap">{previewDoc.textContent}</pre>
                 </div>
               ) : (
