@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { userAPI, paymentAPI } from '../../services/api'
+import { userAPI, paymentAPI, courseAPI } from '../../services/api'
+import { renderGroupedClassOptions } from '../../constants/classData'
 
 const ManageStudents = () => {
   const { currentUser } = useAuth()
@@ -10,6 +11,12 @@ const ManageStudents = () => {
   const [showStudentModal, setShowStudentModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [showMessageModal, setShowMessageModal] = useState(false)
+  const [showEditClassModal, setShowEditClassModal] = useState(false)
+  const [editingStudent, setEditingStudent] = useState(null)
+  const [editClassValue, setEditClassValue] = useState('')
+  const [editStudentName, setEditStudentName] = useState('')
+  const [editStudentPhone, setEditStudentPhone] = useState('')
+  const [extraCourses, setExtraCourses] = useState([])
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -26,6 +33,23 @@ const ManageStudents = () => {
   const [totalPages, setTotalPages] = useState(1)
   const [totalStudents, setTotalStudents] = useState(0)
   const [actionLoading, setActionLoading] = useState(null)
+
+  useEffect(() => {
+    fetchCourses()
+  }, [])
+
+  const fetchCourses = async () => {
+    try {
+      const response = await courseAPI.getAllCourses()
+      if (response.data && response.data.success) {
+        const activeCourses = response.data.courses
+          .filter(c => c.classType === 'course' && c.status === 'active')
+        setExtraCourses(activeCourses)
+      }
+    } catch (error) {
+      console.error('Error fetching courses:', error)
+    }
+  }
 
   // Fetch students data
   useEffect(() => {
@@ -89,6 +113,41 @@ const ManageStudents = () => {
   const handleViewStudent = (student) => {
     setSelectedStudent(student)
     setShowStudentModal(true)
+  }
+
+  const handleOpenEditClass = (student) => {
+    setEditingStudent(student)
+    setEditClassValue(student.class || '')
+    setEditStudentName(student.name || '')
+    setEditStudentPhone(student.phone || '')
+    setShowEditClassModal(true)
+  }
+
+  const handleSaveStudentClass = async (e) => {
+    e.preventDefault()
+    if (!editingStudent) return
+
+    try {
+      setActionLoading('edit-' + editingStudent._id)
+      const response = await userAPI.updateStudent(editingStudent._id, {
+        class: editClassValue,
+        name: editStudentName,
+        phone: editStudentPhone
+      })
+
+      if (response.data && response.data.success) {
+        alert('✅ Student details and class updated successfully!')
+        setShowEditClassModal(false)
+        fetchStudents()
+      } else {
+        alert(response.data?.message || 'Failed to update student')
+      }
+    } catch (error) {
+      console.error('Error updating student class:', error)
+      alert(error.response?.data?.message || 'Error updating student class')
+    } finally {
+      setActionLoading(null)
+    }
   }
 
   const handleViewPayments = async (student) => {
@@ -637,9 +696,18 @@ Institute Admin
                       </td>
                       <td className="px-6 py-4">
                         <div>
-                          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                            {student.class || 'Not Assigned'}
-                          </span>
+                          <button
+                            onClick={() => handleOpenEditClass(student)}
+                            className={`px-3 py-1 rounded-full text-sm font-medium transition-all hover:scale-105 inline-flex items-center gap-1.5 shadow-sm ${
+                              student.class 
+                                ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' 
+                                : 'bg-blue-100 text-blue-800 hover:bg-blue-200 font-semibold border border-blue-300'
+                            }`}
+                            title="Click to edit class"
+                          >
+                            <span>{student.class || 'Not Assigned'}</span>
+                            <span className="text-xs opacity-75">✏️</span>
+                          </button>
                           <div className="mt-2">
                             <div className="text-lg font-bold text-green-600">
                               {formatCurrency(student.totalPaid || 0)}
@@ -672,6 +740,15 @@ Institute Admin
                             title="View Details"
                           >
                             <span>👁️</span> View
+                          </button>
+
+                          {/* Edit Class / Info */}
+                          <button
+                            onClick={() => handleOpenEditClass(student)}
+                            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-1 px-3 py-1 bg-indigo-50 hover:bg-indigo-100 rounded border border-indigo-200"
+                            title="Edit Student Class & Info"
+                          >
+                            <span>✏️</span> Edit
                           </button>
                           
                           {/* Credentials */}
@@ -909,7 +986,18 @@ Institute Admin
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Class
                     </label>
-                    <div className="p-3 bg-gray-50 rounded-lg">{selectedStudent.class || 'Not Assigned'}</div>
+                    <div className="p-3 bg-gray-50 rounded-lg flex justify-between items-center">
+                      <span className="font-semibold text-gray-800">{selectedStudent.class || 'Not Assigned'}</span>
+                      <button
+                        onClick={() => {
+                          setShowStudentModal(false);
+                          handleOpenEditClass(selectedStudent);
+                        }}
+                        className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded shadow-sm flex items-center gap-1"
+                      >
+                        ✏️ Edit Class
+                      </button>
+                    </div>
                   </div>
 
                   <div>
@@ -1158,6 +1246,99 @@ Institute Admin
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Student Class Modal */}
+      {showEditClassModal && editingStudent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-fadeIn">
+            <div className="bg-gradient-to-r from-blue-700 to-blue-900 px-6 py-4 flex justify-between items-center text-white">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <span>✏️</span> Edit Student Class & Info
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowEditClassModal(false)}
+                className="text-white hover:text-gray-200 text-2xl font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveStudentClass} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                  Student Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={editStudentName}
+                  onChange={(e) => setEditStudentName(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                  Email Address
+                </label>
+                <p className="text-sm font-semibold text-gray-800 bg-gray-100 px-3 py-2 rounded border">{editingStudent.email}</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="text"
+                  value={editStudentPhone}
+                  onChange={(e) => setEditStudentPhone(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
+                  Assigned Class / Course <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={editClassValue}
+                  onChange={(e) => setEditClassValue(e.target.value)}
+                  className="w-full border-2 border-blue-500 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-600 font-semibold text-gray-800 bg-blue-50/30"
+                  required
+                >
+                  <option value="">-- Select Class --</option>
+                  {renderGroupedClassOptions(extraCourses)}
+                </select>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setShowEditClassModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading === 'edit-' + editingStudent._id}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow disabled:opacity-50 flex items-center gap-2"
+                >
+                  {actionLoading === 'edit-' + editingStudent._id ? (
+                    <>
+                      <span className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></span>
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Class'
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
