@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { renderGroupedClassOptions } from '../constants/classData'
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -346,11 +347,7 @@ const Signup = () => {
                     }`}
                   >
                     <option value="">Select Class / Course</option>
-                    {courses.map((course, index) => (
-                      <option key={index} value={course}>
-                        {course}
-                      </option>
-                    ))}
+                    {renderGroupedClassOptions()}
                   </select>
                   {errors.course && (
                     <p className="mt-1 text-xs text-red-600">{errors.course}</p>

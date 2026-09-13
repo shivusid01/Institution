@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { userAPI, courseAPI } from '../../services/api'
+import { renderGroupedClassOptions } from '../../constants/classData'
 
 const AdminDashboard = () => {
   const { currentUser } = useAuth()
   const [activeTab, setActiveTab] = useState('register') // 'register' or 'students'
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(false)
+  const [extraCourses, setExtraCourses] = useState([])
   
   // Error states for validation
   const [errors, setErrors] = useState({})
@@ -36,8 +38,7 @@ const AdminDashboard = () => {
       if (response.data.success) {
         const activeCourses = response.data.courses
           .filter(course => course.classType === 'course' && course.status === 'active')
-          .map(course => course.name);
-        setClassOptions([...new Set(activeCourses)]);
+        setExtraCourses(activeCourses);
       }
     } catch (error) {
       console.error('Error fetching courses:', error)
@@ -449,9 +450,7 @@ Instructions:
                       ${errors.class && touched.class ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'}`}
                     >
                       <option value="">Select Class</option>
-                      {classOptions.map((cls, index) => (
-                        <option key={index} value={cls}>{cls}</option>
-                      ))}
+                      {renderGroupedClassOptions(extraCourses)}
                     </select>
                     {errors.class && touched.class && (
                       <p className="text-red-500 text-sm mt-1">{errors.class}</p>

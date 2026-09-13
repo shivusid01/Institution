@@ -1,34 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { documentAPI, courseAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
-
-const DEFAULT_STUDENT_CLASSES = [
-  { id: 'Class 1', name: 'Class 1', category: 'School Level' },
-  { id: 'Class 2', name: 'Class 2', category: 'School Level' },
-  { id: 'Class 3', name: 'Class 3', category: 'School Level' },
-  { id: 'Class 4', name: 'Class 4', category: 'School Level' },
-  { id: 'Class 5', name: 'Class 5', category: 'School Level' },
-  { id: 'Class 6', name: 'Class 6', category: 'School Level' },
-  { id: 'Class 7', name: 'Class 7', category: 'School Level' },
-  { id: 'Class 8', name: 'Class 8', category: 'School Level' },
-  { id: 'Academic (Class 1-8)', name: 'Academic (Class 1-8)', category: 'School Level' },
-  { id: 'Class 9', name: 'Class 9', category: 'School Level' },
-  { id: 'Class 10', name: 'Class 10', category: 'School Level' },
-  { id: 'Foundation (Class 9-10)', name: 'Foundation (Class 9-10)', category: 'School Level' },
-  { id: 'Class 11 (Commerce)', name: 'Class 11 (Commerce)', category: 'Commerce' },
-  { id: 'Class 12 (Commerce)', name: 'Class 12 (Commerce)', category: 'Commerce' },
-  { id: 'CBSE 11-12 (Commerce)', name: 'CBSE 11-12 (Commerce)', category: 'Commerce' },
-  { id: 'State Board 11-12 (Commerce)', name: 'State Board 11-12 (Commerce)', category: 'Commerce' },
-  { id: 'B.COM', name: 'B.COM', category: 'Commerce' },
-  { id: 'B.COM 1st Year', name: 'B.COM 1st Year', category: 'Commerce' },
-  { id: 'B.COM 2nd Year', name: 'B.COM 2nd Year', category: 'Commerce' },
-  { id: 'B.COM 3rd Year', name: 'B.COM 3rd Year', category: 'Commerce' },
-  { id: 'M.COM', name: 'M.COM', category: 'Commerce' },
-  { id: 'M.COM 1st Year', name: 'M.COM 1st Year', category: 'Commerce' },
-  { id: 'M.COM 2nd Year', name: 'M.COM 2nd Year', category: 'Commerce' },
-  { id: 'Competition Exams', name: 'Competition Exams', category: 'Competition' },
-  { id: 'DATA ANALYTICS', name: 'DATA ANALYTICS', category: 'General' }
-];
+import { DEFAULT_STUDENT_CLASSES, renderGroupedClassOptions } from '../constants/classData'
 
 const DocumentList = ({ userRole }) => {
   const { user } = useAuth()
@@ -43,8 +16,7 @@ const DocumentList = ({ userRole }) => {
     sortBy: 'latest'
   })
   const [expandedDoc, setExpandedDoc] = useState(null)
-
-  const [allClassesList, setAllClassesList] = useState([])
+  const [extraCourses, setExtraCourses] = useState([])
 
   useEffect(() => {
     fetchCourses()
@@ -53,32 +25,14 @@ const DocumentList = ({ userRole }) => {
 
   const fetchCourses = async () => {
     try {
-      const classMap = new Map();
-      DEFAULT_STUDENT_CLASSES.forEach(cls => {
-        classMap.set(cls.name.toLowerCase(), { ...cls });
-      });
-
       const response = await courseAPI.getAllCourses()
       if (response.data && response.data.success) {
-        response.data.courses
+        const activeCourses = response.data.courses
           .filter(course => course.classType === 'course' && course.status === 'active')
-          .forEach(course => {
-            if (course.name) {
-              const key = course.name.toLowerCase();
-              if (!classMap.has(key)) {
-                classMap.set(key, {
-                  id: course.name,
-                  name: course.name,
-                  category: course.category || 'General'
-                });
-              }
-            }
-          });
+        setExtraCourses(activeCourses)
       }
-      setAllClassesList(Array.from(classMap.values()))
     } catch (error) {
       console.error('Error fetching courses:', error)
-      setAllClassesList(DEFAULT_STUDENT_CLASSES)
     }
   }
 
@@ -288,33 +242,7 @@ const DocumentList = ({ userRole }) => {
               className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all font-medium"
             >
               <option value="">All Classes</option>
-              {/* Dynamic Categories */}
-              {Object.entries(
-                allClassesList.reduce((acc, cls) => {
-                  const cat = cls.category || 'General';
-                  if (!acc[cat]) acc[cat] = [];
-                  acc[cat].push(cls);
-                  return acc;
-                }, {})
-              ).map(([category, items]) => (
-                <optgroup key={category} label={category}>
-                  {items.map(cls => (
-                    <option key={cls.id} value={cls.id}>
-                      {cls.name}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-              {/* Dynamic Classes from Documents */}
-              {classes.length > 0 && (
-                <optgroup label="Document Classes">
-                  {classes.map(cls => (
-                    <option key={cls._id} value={cls._id}>
-                      {cls.title}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
+              {renderGroupedClassOptions(extraCourses)}
             </select>
           </div>
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { authAPI, userAPI } from '../../services/api'
+import { renderGroupedClassOptions } from '../../constants/classData'
 
 const StudentProfile = () => {
   const { user, currentUser, updateUser } = useAuth()
@@ -587,13 +588,15 @@ const StudentProfile = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Class
                     </label>
-                    <input
-                      type="text"
+                    <select
                       name="class"
                       value={formData.class}
                       onChange={handleInputChange}
                       className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                    >
+                      <option value="">Select Class</option>
+                      {renderGroupedClassOptions()}
+                    </select>
                   </div>
 
                   {/* Emergency Contact */}

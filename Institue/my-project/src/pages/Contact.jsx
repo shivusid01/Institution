@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
+import { renderGroupedClassOptions } from '../constants/classData'
 
 const Contact = () => {
   const { user } = useAuth()
@@ -330,11 +331,8 @@ const Contact = () => {
                       onChange={handleChange}
                       className="w-full px-5 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 hover:border-blue-300"
                     >
-                      {courses.map((course) => (
-                        <option key={course.value} value={course.value}>
-                          {course.label}
-                        </option>
-                      ))}
+                      <option value="">Select Interested Course</option>
+                      {renderGroupedClassOptions()}
                     </select>
                   </div>
                 </div>
