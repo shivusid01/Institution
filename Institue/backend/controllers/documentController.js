@@ -85,7 +85,7 @@ exports.syncExistingFilesToGridFS = async () => {
 // @access  Private (Admin/Teacher)
 exports.uploadDocument = async (req, res) => {
   try {
-    const { classId, topic, description, className } = req.body;
+    const { classId, topic, description, className, category } = req.body;
 
     // Validate required fields
     if (!req.file) {
@@ -138,6 +138,7 @@ exports.uploadDocument = async (req, res) => {
       classId: classId, // Store the ID as-is (might be MongoDB ObjectId or string ID)
       className: finalClassName,
       topic: topic,
+      category: category || 'Study Material',
       fileUrl: `/uploads/documents/${req.file.filename}`,
       fileName: req.file.filename,
       gridFsId: gridFsId,
@@ -171,8 +172,12 @@ exports.uploadDocument = async (req, res) => {
 // @access  Private (Admin/Student/Teacher)
 exports.getAllDocuments = async (req, res) => {
   try {
-    const { classId, topic, sortBy } = req.query;
+    const { classId, topic, category, sortBy } = req.query;
     let filter = { isActive: true };
+
+    if (category && category !== 'all') {
+      filter.category = category;
+    }
 
     // Apply class filters
     if (classId) {

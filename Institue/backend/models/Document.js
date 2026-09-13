@@ -23,6 +23,11 @@ const documentSchema = new mongoose.Schema({
     required: [true, 'Topic is required'],
     trim: true
   },
+  category: {
+    type: String,
+    enum: ['Study Material', 'Current Affairs', 'Checked Copy', 'Results'],
+    default: 'Study Material'
+  },
   fileUrl: {
     type: String,
     required: [true, 'File URL is required']

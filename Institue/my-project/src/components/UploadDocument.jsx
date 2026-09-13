@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { documentAPI, courseAPI } from '../services/api'
 import { DEFAULT_STUDENT_CLASSES, getGroupedClassOptions, renderGroupedClassOptions } from '../constants/classData'
 
-const UploadDocument = ({ onSuccess }) => {
+const UploadDocument = ({ onSuccess, defaultCategory = 'Study Material' }) => {
   const [allClasses, setAllClasses] = useState([])
   const [extraCourses, setExtraCourses] = useState([])
 
@@ -26,6 +26,7 @@ const UploadDocument = ({ onSuccess }) => {
   const [formData, setFormData] = useState({
     classId: '',
     topic: '',
+    category: defaultCategory,
     description: '',
     file: null
   })
@@ -147,6 +148,7 @@ const UploadDocument = ({ onSuccess }) => {
       uploadFormData.append('classId', formData.classId)
       uploadFormData.append('className', className)
       uploadFormData.append('topic', formData.topic)
+      uploadFormData.append('category', formData.category || defaultCategory)
       uploadFormData.append('description', formData.description)
       uploadFormData.append('file', formData.file)
 
@@ -157,6 +159,7 @@ const UploadDocument = ({ onSuccess }) => {
         setFormData({
           classId: '',
           topic: '',
+          category: defaultCategory,
           description: '',
           file: null
         })
@@ -217,6 +220,25 @@ const UploadDocument = ({ onSuccess }) => {
           >
             <option value="">-- Select a Class --</option>
             {renderGroupedClassOptions(extraCourses)}
+          </select>
+        </div>
+
+        {/* Category Selection */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Material Category <span className="text-red-500">*</span>
+          </label>
+          <select
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium"
+            required
+          >
+            <option value="Study Material">📚 Study Material</option>
+            <option value="Current Affairs">📰 Current Affairs</option>
+            <option value="Checked Copy">📝 Checked Copy</option>
+            <option value="Results">🏆 Results</option>
           </select>
         </div>
 

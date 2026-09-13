@@ -3,7 +3,7 @@ import { documentAPI, courseAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { DEFAULT_STUDENT_CLASSES, renderGroupedClassOptions } from '../constants/classData'
 
-const DocumentList = ({ userRole }) => {
+const DocumentList = ({ userRole, category = 'Study Material' }) => {
   const { user } = useAuth()
   const [documents, setDocuments] = useState([])
   const [filteredDocuments, setFilteredDocuments] = useState([])
@@ -20,8 +20,11 @@ const DocumentList = ({ userRole }) => {
 
   useEffect(() => {
     fetchCourses()
-    fetchData()
   }, [])
+
+  useEffect(() => {
+    fetchData()
+  }, [category])
 
   const fetchCourses = async () => {
     try {
@@ -44,7 +47,7 @@ const DocumentList = ({ userRole }) => {
     try {
       setLoading(true)
       setError('')
-      const docsResponse = await documentAPI.getAllDocuments()
+      const docsResponse = await documentAPI.getAllDocuments({ category })
       
       // Handle documents response
       const docsData = docsResponse.data.data || docsResponse.data || []
