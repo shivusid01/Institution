@@ -1,7 +1,164 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { documentAPI, courseAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { DEFAULT_STUDENT_CLASSES, renderGroupedClassOptions } from '../constants/classData'
+
+const PdfCanvasViewer = ({ arrayBuffer }) => {
+  const [numPages, setNumPages] = useState(0)
+  const [pageNumber, setPageNumber] = useState(1)
+  const [scale, setScale] = useState(1.2)
+  const [pdfDoc, setPdfDoc] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const canvasRef = useRef(null)
+
+  useEffect(() => {
+    let isMounted = true
+    const initPdf = async () => {
+      try {
+        setLoading(true)
+        setError('')
+        
+        // Load PDF.js script dynamically if not loaded
+        if (!window.pdfjsLib) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script')
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
+            script.onload = () => {
+              if (window.pdfjsLib) {
+                window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+                resolve()
+              } else {
+                reject(new Error('PDF.js failed to initialize'))
+              }
+            }
+            script.onerror = reject
+            document.body.appendChild(script)
+          })
+        }
+
+        const loadingTask = window.pdfjsLib.getDocument({ data: arrayBuffer })
+        const pdf = await loadingTask.promise
+        if (isMounted) {
+          setPdfDoc(pdf)
+          setNumPages(pdf.numPages)
+          setPageNumber(1)
+          setLoading(false)
+        }
+      } catch (err) {
+        console.error('PDF.js render error:', err)
+        if (isMounted) {
+          setError('Unable to parse PDF content.')
+          setLoading(false)
+        }
+      }
+    }
+
+    if (arrayBuffer) {
+      initPdf()
+    }
+
+    return () => {
+      isMounted = false
+    }
+  }, [arrayBuffer])
+
+  useEffect(() => {
+    let renderTask = null
+    const renderPage = async () => {
+      if (!pdfDoc || !canvasRef.current) return
+      try {
+        const page = await pdfDoc.getPage(pageNumber)
+        const canvas = canvasRef.current
+        const context = canvas.getContext('2d')
+
+        const viewport = page.getViewport({ scale })
+        canvas.height = viewport.height
+        canvas.width = viewport.width
+
+        const renderContext = {
+          canvasContext: context,
+          viewport: viewport
+        }
+        renderTask = page.render(renderContext)
+        await renderTask.promise
+      } catch (err) {
+        if (err.name !== 'RenderingCancelledException') {
+          console.error('Page render error:', err)
+        }
+      }
+    }
+
+    renderPage()
+  }, [pdfDoc, pageNumber, scale])
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-white p-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400 mb-4"></div>
+        <p className="font-medium text-gray-200">Rendering document on HTML5 canvas...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-white p-8">
+        <p className="text-red-400 font-semibold mb-2">⚠️ {error}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col h-full w-full bg-gray-900 overflow-hidden">
+      {/* Controls Bar */}
+      <div className="bg-gray-800 text-white px-4 py-2 flex items-center justify-between border-b border-gray-700 text-sm flex-wrap gap-2 shadow-inner">
+        <div className="flex items-center space-x-2">
+          <button
+            disabled={pageNumber <= 1}
+            onClick={() => setPageNumber(p => Math.max(p - 1, 1))}
+            className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded disabled:opacity-40 font-semibold transition"
+          >
+            ◀ Prev
+          </button>
+          <span className="font-medium text-gray-300">
+            Page <span className="text-white font-bold">{pageNumber}</span> of <span className="text-white font-bold">{numPages}</span>
+          </span>
+          <button
+            disabled={pageNumber >= numPages}
+            onClick={() => setPageNumber(p => Math.min(p + 1, numPages))}
+            className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded disabled:opacity-40 font-semibold transition"
+          >
+            Next ▶
+          </button>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setScale(s => Math.max(s - 0.2, 0.6))}
+            className="px-2.5 py-1 bg-gray-700 hover:bg-gray-600 rounded font-bold"
+            title="Zoom Out"
+          >
+            🔍 -
+          </button>
+          <span className="text-xs text-gray-300 w-12 text-center font-mono">{Math.round(scale * 100)}%</span>
+          <button
+            onClick={() => setScale(s => Math.min(s + 0.2, 2.5))}
+            className="px-2.5 py-1 bg-gray-700 hover:bg-gray-600 rounded font-bold"
+            title="Zoom In"
+          >
+            🔍 +
+          </button>
+        </div>
+      </div>
+
+      {/* Canvas Viewport */}
+      <div className="flex-1 overflow-auto p-4 flex justify-center items-start bg-gray-950">
+        <canvas ref={canvasRef} className="shadow-2xl rounded bg-white max-w-full h-auto my-auto" />
+      </div>
+    </div>
+  )
+}
 
 const DocumentList = ({ userRole, category = 'Study Material' }) => {
   const { user } = useAuth()
@@ -138,6 +295,7 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
       topic: doc.topic || '',
       className: doc.className || '',
       docId: doc._id,
+      arrayBuffer: null,
       blobUrl: null,
       fileType: 'loading'
     })
@@ -150,26 +308,35 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
         response = await documentAPI.downloadDocument(doc._id);
       }
 
-      const contentType = response.headers['content-type'] || 'application/pdf';
-      const blob = new Blob([response.data], { type: contentType });
-      const blobUrl = window.URL.createObjectURL(blob);
+      const rawBuffer = response.data;
+      const contentType = (response.headers['content-type'] || '').toLowerCase();
 
-      let fileType = 'pdf';
       if (contentType.includes('image')) {
-        fileType = 'image';
+        const blob = new Blob([rawBuffer], { type: contentType });
+        const blobUrl = window.URL.createObjectURL(blob);
+        setPreviewDoc(prev => ({
+          ...prev,
+          blobUrl,
+          fileType: 'image'
+        }));
       } else if (contentType.includes('text') || contentType.includes('json')) {
-        fileType = 'text';
+        const textContent = new TextDecoder().decode(rawBuffer);
+        setPreviewDoc(prev => ({
+          ...prev,
+          textContent,
+          fileType: 'text'
+        }));
+      } else {
+        // PDF or default document -> Render with HTML5 Canvas Viewer!
+        setPreviewDoc(prev => ({
+          ...prev,
+          arrayBuffer: rawBuffer,
+          fileType: 'pdf'
+        }));
       }
-
-      setPreviewDoc(prev => ({
-        ...prev,
-        blobUrl: blobUrl,
-        fileType: fileType,
-        contentType: contentType
-      }));
     } catch (err) {
       console.error('Error loading preview:', err);
-      setPreviewError('Unable to load inline preview for this file. You can still download it directly.');
+      setPreviewError('Unable to fetch file for preview. Please click Download File below.');
     } finally {
       setPreviewLoading(false);
     }
@@ -479,23 +646,23 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
               </div>
             </div>
 
-            {/* Modal Body: Blob Document Viewer */}
-            <div className="flex-1 bg-gray-900 p-2 relative overflow-hidden flex items-center justify-center">
+            {/* Modal Body: Custom Renderers */}
+            <div className="flex-1 bg-gray-900 relative overflow-hidden flex items-center justify-center">
               {previewLoading ? (
                 <div className="text-center text-white p-8">
                   <div className="animate-spin rounded-full h-14 w-14 border-t-2 border-b-2 border-blue-400 mx-auto mb-4"></div>
-                  <p className="text-gray-300 font-medium">Loading document preview...</p>
+                  <p className="text-gray-300 font-medium">Fetching document content...</p>
                 </div>
               ) : previewError ? (
                 <div className="text-center bg-white/10 p-8 rounded-xl max-w-md text-white border border-white/20">
                   <span className="text-4xl mb-3 block">⚠️</span>
-                  <p className="font-semibold text-lg mb-2">Preview Unavailable</p>
+                  <p className="font-semibold text-lg mb-2">Preview Error</p>
                   <p className="text-sm text-gray-300 mb-6">{previewError}</p>
                   <button
                     onClick={() => handleDownload(previewDoc.docId, previewDoc.title, null)}
                     className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold text-sm transition shadow-lg"
                   >
-                    ⬇️ Download Document
+                    ⬇️ Download File
                   </button>
                 </div>
               ) : previewDoc.fileType === 'image' ? (
@@ -506,12 +673,12 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
                     className="max-h-full max-w-full object-contain rounded-lg shadow-2xl"
                   />
                 </div>
+              ) : previewDoc.fileType === 'text' ? (
+                <div className="w-full h-full p-4 overflow-auto bg-gray-950 text-green-400 font-mono text-sm">
+                  <pre className="whitespace-pre-wrap">{previewDoc.textContent}</pre>
+                </div>
               ) : (
-                <iframe
-                  src={previewDoc.blobUrl}
-                  className="w-full h-full rounded-lg border-0 bg-white shadow-inner"
-                  title={previewDoc.title}
-                />
+                <PdfCanvasViewer arrayBuffer={previewDoc.arrayBuffer} />
               )}
             </div>
           </div>

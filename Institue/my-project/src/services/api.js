@@ -407,9 +407,9 @@ export const documentAPI = {
     responseType: 'blob'
   }),
 
-  // View document inline (as Blob)
+  // View document inline (as ArrayBuffer)
   viewDocument: (documentId) => api.get(`/documents/view/${documentId}`, {
-    responseType: 'blob'
+    responseType: 'arraybuffer'
   }),
 
   // Update document
