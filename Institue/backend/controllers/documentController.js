@@ -421,6 +421,9 @@ exports.downloadDocument = async (req, res) => {
 
     // 1. Send physical file if present on local disk
     if (fs.existsSync(filePath)) {
+      if (req.query.inline === 'true' || req.query.view === 'true') {
+        return res.sendFile(filePath);
+      }
       return res.download(filePath, downloadName);
     }
 
@@ -441,8 +444,9 @@ exports.downloadDocument = async (req, res) => {
 
         if (gridFiles.length > 0) {
           console.log(`📡 Streaming document "${document.title}" from MongoDB GridFS bucket...`);
-          res.setHeader('Content-Type', 'application/pdf');
-          res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(downloadName)}"`);
+          const isInline = req.query.inline === 'true' || req.query.view === 'true';
+          res.setHeader('Content-Type', gridFiles[0].contentType || 'application/pdf');
+          res.setHeader('Content-Disposition', isInline ? `inline; filename="${encodeURIComponent(downloadName)}"` : `attachment; filename="${encodeURIComponent(downloadName)}"`);
 
           const targetGridFile = gridFiles[0];
           const downloadStream = bucket.openDownloadStream(targetGridFile._id);

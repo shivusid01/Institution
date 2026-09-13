@@ -128,6 +128,18 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
     })
   }
 
+  const handleView = (fileUrl, docId) => {
+    const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const baseUrl = apiURL.replace(/\/api\/?$/, '');
+    if (fileUrl) {
+      const cleanPath = fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`;
+      const fullUrl = fileUrl.startsWith('http') ? fileUrl : `${baseUrl}${cleanPath}`;
+      window.open(fullUrl, '_blank');
+    } else if (docId) {
+      window.open(`${baseUrl}/api/documents/download/${docId}?inline=true`, '_blank');
+    }
+  }
+
   const handleDownload = async (documentId, fileName, fileUrl) => {
     try {
       const response = await documentAPI.downloadDocument(documentId)
@@ -324,8 +336,17 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
                   </div>
                 </div>
 
-                {/* Download/Delete Buttons */}
+                {/* View/Download/Delete Buttons */}
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => handleView(doc.fileUrl, doc._id)}
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition cursor-pointer"
+                    title="View file in browser tab"
+                  >
+                    <span>👁️</span>
+                    View
+                  </button>
+
                   <button
                     onClick={() => handleDownload(doc._id, doc.fileName || doc.title, doc.fileUrl)}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition cursor-pointer"
