@@ -604,3 +604,73 @@ exports.getDocumentById = async (req, res) => {
     });
   }
 };
+
+// @desc    View document inline (without triggering download)
+// @route   GET /api/documents/view/:documentId
+// @access  Public / Private
+exports.viewDocument = async (req, res) => {
+  try {
+    const { documentId } = req.params;
+
+    const document = await Document.findById(documentId);
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not found'
+      });
+    }
+
+    const fileExt = path.extname(document.fileName || document.fileUrl || '').toLowerCase() || '.pdf';
+    let contentType = 'application/pdf';
+    if (fileExt === '.jpg' || fileExt === '.jpeg') contentType = 'image/jpeg';
+    else if (fileExt === '.png') contentType = 'image/png';
+    else if (fileExt === '.gif') contentType = 'image/gif';
+    else if (fileExt === '.txt') contentType = 'text/plain';
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', 'inline');
+
+    // Construct file path
+    let filePath = path.join(__dirname, '..', document.fileUrl);
+    if (!fs.existsSync(filePath)) {
+      filePath = path.join(__dirname, '../uploads/documents', document.fileName);
+    }
+
+    if (fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
+    }
+
+    // GridFS stream inline fallback
+    if (mongoose.connection && mongoose.connection.readyState === 1 && mongoose.connection.db) {
+      const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+        bucketName: 'documents'
+      });
+
+      let gridFiles = [];
+      if (document.gridFsId) {
+        gridFiles = await bucket.find({ _id: document.gridFsId }).toArray();
+      }
+      if (gridFiles.length === 0 && document.fileName) {
+        gridFiles = await bucket.find({ filename: document.fileName }).toArray();
+      }
+
+      if (gridFiles.length > 0) {
+        res.setHeader('Content-Type', gridFiles[0].contentType || contentType);
+        res.setHeader('Content-Disposition', 'inline');
+        return bucket.openDownloadStream(gridFiles[0]._id).pipe(res);
+      }
+    }
+
+    // PDF fallback buffer
+    const pdfBuffer = generatePDFBuffer(document.title, document.className, document.topic, document.description);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline');
+    return res.send(pdfBuffer);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error viewing document',
+      error: error.message
+    });
+  }
+};

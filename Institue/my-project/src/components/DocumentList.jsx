@@ -15,8 +15,8 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
     topic: '',
     sortBy: 'latest'
   })
-  const [expandedDoc, setExpandedDoc] = useState(null)
   const [extraCourses, setExtraCourses] = useState([])
+  const [previewDoc, setPreviewDoc] = useState(null)
 
   useEffect(() => {
     fetchCourses()
@@ -128,16 +128,23 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
     })
   }
 
-  const handleView = (fileUrl, docId) => {
+  const handleView = (doc) => {
     const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     const baseUrl = apiURL.replace(/\/api\/?$/, '');
-    if (fileUrl) {
-      const cleanPath = fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`;
-      const fullUrl = fileUrl.startsWith('http') ? fileUrl : `${baseUrl}${cleanPath}`;
-      window.open(fullUrl, '_blank');
-    } else if (docId) {
-      window.open(`${baseUrl}/api/documents/download/${docId}?inline=true`, '_blank');
+    let url = '';
+    if (doc._id) {
+      url = `${baseUrl}/api/documents/view/${doc._id}`;
+    } else if (doc.fileUrl) {
+      const cleanPath = doc.fileUrl.startsWith('/') ? doc.fileUrl : `/${doc.fileUrl}`;
+      url = doc.fileUrl.startsWith('http') ? doc.fileUrl : `${baseUrl}${cleanPath}`;
     }
+
+    setPreviewDoc({
+      title: doc.title || 'Document Preview',
+      topic: doc.topic || '',
+      className: doc.className || '',
+      url: url
+    })
   }
 
   const handleDownload = async (documentId, fileName, fileUrl) => {
@@ -169,7 +176,6 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
       window.URL.revokeObjectURL(url)
     } catch (err) {
       console.error('Error downloading document:', err)
-      // Fallback: direct window.open
       if (fileUrl) {
         const apiURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
         const baseUrl = apiURL.replace(/\/api\/?$/, '');
@@ -339,9 +345,9 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
                 {/* View/Download/Delete Buttons */}
                 <div className="flex gap-2">
                   <button
-                    onClick={() => handleView(doc.fileUrl, doc._id)}
-                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition cursor-pointer"
-                    title="View file in browser tab"
+                    onClick={() => handleView(doc)}
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition cursor-pointer shadow-sm"
+                    title="View file on screen without downloading"
                   >
                     <span>👁️</span>
                     View
@@ -349,7 +355,7 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
 
                   <button
                     onClick={() => handleDownload(doc._id, doc.fileName || doc.title, doc.fileUrl)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition cursor-pointer shadow-sm"
                   >
                     <span>⬇️</span>
                     Download
@@ -359,7 +365,7 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
                   {(userRole === 'admin' || user?._id === doc.uploadedBy._id) && (
                     <button
                       onClick={() => handleDelete(doc._id)}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition"
+                      className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition shadow-sm"
                     >
                       <span>🗑️</span>
                     </button>
@@ -400,6 +406,53 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Document Inline Preview Modal */}
+      {previewDoc && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-sm p-2 sm:p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[92vh] flex flex-col overflow-hidden border border-gray-200">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-900 to-blue-700 p-4 text-white flex justify-between items-center">
+              <div className="flex items-center space-x-3 overflow-hidden pr-4">
+                <span className="text-2xl flex-shrink-0">📄</span>
+                <div className="truncate">
+                  <h3 className="text-lg font-bold text-white truncate">{previewDoc.title}</h3>
+                  <p className="text-xs text-blue-100 truncate">
+                    Topic: <span className="font-semibold">{previewDoc.topic}</span> {previewDoc.className && `| Class: ${previewDoc.className}`}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 flex-shrink-0">
+                <a
+                  href={previewDoc.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                >
+                  ↗️ Open Full Tab
+                </a>
+                <button
+                  onClick={() => setPreviewDoc(null)}
+                  className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-1.5 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body: Inline PDF / Image / Document Frame */}
+            <div className="flex-1 bg-gray-100 p-1 sm:p-2 relative overflow-hidden">
+              <iframe
+                src={previewDoc.url}
+                className="w-full h-full rounded-lg border-0 bg-white shadow-inner"
+                title={previewDoc.title}
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>

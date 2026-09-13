@@ -7,6 +7,7 @@ const {
   getAllDocuments,
   getDocumentsByClass,
   downloadDocument,
+  viewDocument,
   updateDocument,
   deleteDocument,
   getDocumentById
@@ -47,6 +48,9 @@ router.get('/', protect, getAllDocuments);
 
 // Get - Documents by class
 router.get('/class/:classId', protect, getDocumentsByClass);
+
+// View document inline (Public / Private)
+router.get('/view/:documentId', viewDocument);
 
 // Get - Single document by ID
 router.get('/:documentId', protect, getDocumentById);

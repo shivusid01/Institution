@@ -130,6 +130,16 @@ dirs.forEach(dir => {
 // Serve static files with fallback for missing documents on ephemeral disk
 app.get('/uploads/documents/:filename', async (req, res, next) => {
   const filePath = path.join(__dirname, 'uploads/documents', req.params.filename);
+  const ext = path.extname(req.params.filename).toLowerCase();
+  let contentType = 'application/pdf';
+  if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+  else if (ext === '.png') contentType = 'image/png';
+  else if (ext === '.gif') contentType = 'image/gif';
+  else if (ext === '.txt') contentType = 'text/plain';
+
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Disposition', 'inline');
+
   if (fs.existsSync(filePath)) {
     return res.sendFile(filePath);
   }
