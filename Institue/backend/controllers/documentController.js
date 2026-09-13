@@ -222,20 +222,25 @@ exports.getAllDocuments = async (req, res) => {
           }
           if (lower.includes('11') && lower.includes('commerce')) {
             expanded.add('Class 11 (Commerce)');
-            expanded.add('CBSE 11-12 (Commerce)');
-            expanded.add('State Board 11-12 (Commerce)');
+            expanded.add('Class 11 (State Board Commerce)');
+            expanded.add('11 Commerce');
           }
           if (lower.includes('12') && lower.includes('commerce')) {
             expanded.add('Class 12 (Commerce)');
-            expanded.add('CBSE 11-12 (Commerce)');
-            expanded.add('State Board 11-12 (Commerce)');
+            expanded.add('Class 12 (State Board Commerce)');
+            expanded.add('12 Commerce');
+          }
+          if (lower.includes('state board')) {
+            expanded.add('State Board');
+            expanded.add('Class 11 (State Board Commerce)');
+            expanded.add('Class 12 (State Board Commerce)');
+            expanded.add('11 Commerce');
+            expanded.add('12 Commerce');
           }
           if (lower.includes('academic') || (lower.includes('class') && /[1-8]/.test(lower))) {
-            expanded.add('Academic (Class 1-8)');
             ['1','2','3','4','5','6','7','8'].forEach(num => expanded.add(`Class ${num}`));
           }
           if (lower.includes('foundation') || lower.includes('class 9') || lower.includes('class 10')) {
-            expanded.add('Foundation (Class 9-10)');
             expanded.add('Class 9');
             expanded.add('Class 10');
           }
@@ -399,9 +404,8 @@ exports.downloadDocument = async (req, res) => {
     document.downloads += 1;
     await document.save();
 
-    const downloadName = (document.fileName || `${document.title || 'document'}.pdf`).endsWith('.pdf')
-      ? (document.fileName || `${document.title || 'document'}.pdf`)
-      : `${document.title || 'document'}.pdf`;
+    const fileExt = path.extname(document.fileName || document.fileUrl || '') || '';
+    const downloadName = document.fileName || (fileExt ? `${document.title || 'document'}${fileExt}` : `${document.title || 'document'}.pdf`);
 
     // Construct file path with multiple fallback attempts
     let filePath = path.join(__dirname, '..', document.fileUrl);

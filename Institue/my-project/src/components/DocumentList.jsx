@@ -144,12 +144,13 @@ const DocumentList = ({ userRole, category = 'Study Material' }) => {
         }
       }
 
-      const blob = new Blob([response.data], { type: 'application/pdf' })
+      const contentType = response.headers['content-type'] || 'application/octet-stream';
+      const blob = new Blob([response.data], { type: contentType })
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      const downloadName = fileName || 'document.pdf';
-      link.setAttribute('download', downloadName.endsWith('.pdf') ? downloadName : `${downloadName}.pdf`)
+      const downloadName = fileName || 'document';
+      link.setAttribute('download', downloadName)
       document.body.appendChild(link)
       link.click()
       link.parentNode.removeChild(link)

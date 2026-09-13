@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { documentAPI, courseAPI } from '../services/api'
-import { DEFAULT_STUDENT_CLASSES, getGroupedClassOptions, renderGroupedClassOptions } from '../constants/classData'
+import { renderGroupedClassOptions } from '../constants/classData'
 
 const UploadDocument = ({ onSuccess, defaultCategory = 'Study Material' }) => {
-  const [allClasses, setAllClasses] = useState([])
   const [extraCourses, setExtraCourses] = useState([])
 
   useEffect(() => {
@@ -33,6 +32,7 @@ const UploadDocument = ({ onSuccess, defaultCategory = 'Study Material' }) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [isDragging, setIsDragging] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -42,15 +42,8 @@ const UploadDocument = ({ onSuccess, defaultCategory = 'Study Material' }) => {
     }))
   }
 
-  const [isDragging, setIsDragging] = useState(false)
-
   const processSelectedFile = (file) => {
     if (!file) return false;
-    // Check if file is PDF
-    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-      setError('Please select a PDF file')
-      return false;
-    }
     // Check file size (max 50MB)
     if (file.size > 50 * 1024 * 1024) {
       setError('File size must be less than 50MB')
@@ -133,7 +126,7 @@ const UploadDocument = ({ onSuccess, defaultCategory = 'Study Material' }) => {
       return
     }
     if (!formData.file) {
-      setError('Please select a PDF file')
+      setError('Please select a file to upload')
       return
     }
 
@@ -164,7 +157,8 @@ const UploadDocument = ({ onSuccess, defaultCategory = 'Study Material' }) => {
           file: null
         })
         // Reset file input
-        document.getElementById('fileInput').value = ''
+        const fileElem = document.getElementById('fileInput')
+        if (fileElem) fileElem.value = ''
         
         // Call onSuccess callback
         if (onSuccess) {
@@ -184,7 +178,7 @@ const UploadDocument = ({ onSuccess, defaultCategory = 'Study Material' }) => {
     <div className="bg-white rounded-lg shadow-lg p-8 border-t-4 border-gradient-to-r from-blue-600 to-blue-900">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
         <span className="text-3xl mr-3">📤</span>
-        Upload PDF Document
+        Upload File / Document
       </h2>
 
       {error && (
@@ -276,7 +270,7 @@ const UploadDocument = ({ onSuccess, defaultCategory = 'Study Material' }) => {
         {/* File Upload */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            PDF File <span className="text-red-500">*</span>
+            Select File <span className="text-red-500">*</span>
           </label>
           <div 
             onDragEnter={handleDragEnter}
@@ -293,16 +287,15 @@ const UploadDocument = ({ onSuccess, defaultCategory = 'Study Material' }) => {
             <input
               id="fileInput"
               type="file"
-              accept=".pdf"
               onChange={handleFileChange}
               className="hidden"
             />
             <div className="pointer-events-none">
               <div className="text-4xl mb-2">{isDragging ? '📥' : '📄'}</div>
               <p className="text-gray-700 font-medium">
-                {isDragging ? 'Release to drop your PDF file here' : 'Click to select PDF or drag and drop file here'}
+                {isDragging ? 'Release to drop your file here' : 'Click to select file or drag and drop file here'}
               </p>
-              <p className="text-xs text-gray-500 mt-1">Max size: 50MB (.pdf files only)</p>
+              <p className="text-xs text-gray-500 mt-1">Max size: 50MB (All file types supported)</p>
               {formData.file && (
                 <p className="text-sm text-green-600 mt-2 font-semibold">
                   ✅ Selected File: {formData.file.name}

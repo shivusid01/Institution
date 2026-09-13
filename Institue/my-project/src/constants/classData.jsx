@@ -10,18 +10,18 @@ export const DEFAULT_STUDENT_CLASSES = [
   { id: 'Class 6', name: 'Class 6', category: 'School Level (Class 1-8)' },
   { id: 'Class 7', name: 'Class 7', category: 'School Level (Class 1-8)' },
   { id: 'Class 8', name: 'Class 8', category: 'School Level (Class 1-8)' },
-  { id: 'Academic (Class 1-8)', name: 'Academic (Class 1-8)', category: 'School Level (Class 1-8)' },
 
   // Foundation (Class 9-10)
   { id: 'Class 9', name: 'Class 9', category: 'Foundation (Class 9-10)' },
   { id: 'Class 10', name: 'Class 10', category: 'Foundation (Class 9-10)' },
-  { id: 'Foundation (Class 9-10)', name: 'Foundation (Class 9-10)', category: 'Foundation (Class 9-10)' },
 
   // Commerce (Class 11-12)
   { id: 'Class 11 (Commerce)', name: 'Class 11 (Commerce)', category: 'Commerce (Class 11-12)' },
   { id: 'Class 12 (Commerce)', name: 'Class 12 (Commerce)', category: 'Commerce (Class 11-12)' },
-  { id: 'CBSE 11-12 (Commerce)', name: 'CBSE 11-12 (Commerce)', category: 'Commerce (Class 11-12)' },
-  { id: 'State Board 11-12 (Commerce)', name: 'State Board 11-12 (Commerce)', category: 'Commerce (Class 11-12)' },
+
+  // State Board
+  { id: 'Class 11 (State Board Commerce)', name: '11 Commerce', category: 'State Board' },
+  { id: 'Class 12 (State Board Commerce)', name: '12 Commerce', category: 'State Board' },
 
   // B.COM
   { id: 'B.COM 1st Year', name: 'B.COM 1st Year', category: 'B.COM' },
@@ -43,6 +43,7 @@ export const CATEGORY_ORDER = [
   'School Level (Class 1-8)',
   'Foundation (Class 9-10)',
   'Commerce (Class 11-12)',
+  'State Board',
   'B.COM',
   'M.COM',
   'Competition',
@@ -64,12 +65,21 @@ export const getGroupedClassOptions = (extraCourses = []) => {
       if (!courseName) return
 
       const key = courseName.toLowerCase().trim()
-      if (key === 'b.com' || key === 'bcom' || key === 'm.com' || key === 'mcom') return;
+      if (
+        key === 'b.com' || key === 'bcom' || 
+        key === 'm.com' || key === 'mcom' ||
+        key === 'foundation (class 9-10)' ||
+        key === 'academic (class 1-8)' ||
+        key === 'cbse 11-12 (commerce)' ||
+        key === 'state board 11-12 (commerce)'
+      ) return;
 
       if (!classMap.has(key)) {
         let category = (typeof course === 'object' && course?.category) ? course.category : 'General'
 
-        if (key.includes('b.com') || key.includes('bcom')) {
+        if (key.includes('state board')) {
+          category = 'State Board'
+        } else if (key.includes('b.com') || key.includes('bcom')) {
           category = 'B.COM'
         } else if (key.includes('m.com') || key.includes('mcom')) {
           category = 'M.COM'
