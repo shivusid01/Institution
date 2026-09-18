@@ -1,34 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Homepage -->
   <url>
     <loc>https://sharma-institute.vercel.app/</loc>
-    <lastmod>2026-09-01</lastmod>
-    <changefreq>weekly</changefreq>
     <priority>1.00</priority>
+    <changefreq>daily</changefreq>
   </url>
-
-  <!-- Courses Page -->
   <url>
-    <loc>https://sharma-institute.vercel.app/courses</loc>
-    <lastmod>2026-09-01</lastmod>
-    <changefreq>monthly</changefreq>
+    <loc>https://sharma-institute.vercel.app/about-us</loc>
     <priority>0.80</priority>
-  </url>
-
-  <!-- About Us Page -->
-  <url>
-    <loc>https://sharma-institute.vercel.app/about</loc>
-    <lastmod>2026-09-01</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.70</priority>
   </url>
-
-  <!-- Contact Us Page -->
+  <url>
+    <loc>https://sharma-institute.vercel.app/courses/school-coaching</loc>
+    <priority>0.90</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://sharma-institute.vercel.app/courses/data-analytics</loc>
+    <priority>0.90</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://sharma-institute.vercel.app/admissions</loc>
+    <priority>0.80</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://sharma-institute.vercel.app/student-corner</loc>
+    <priority>0.85</priority>
+    <changefreq>daily</changefreq>
+  </url>
   <url>
     <loc>https://sharma-institute.vercel.app/contact</loc>
-    <lastmod>2026-09-01</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.70</priority>
+    <changefreq>monthly</changefreq>
   </url>
 </urlset>
