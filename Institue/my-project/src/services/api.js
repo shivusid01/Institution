@@ -252,7 +252,7 @@ export const authAPI = {
 
 // ================= USER APIs =================
 export const userAPI = {
-  getAllStudents: () => api.get('/users/students'),
+  getAllStudents: (params) => api.get('/users/students', { params }),
   getStudent: (id) => api.get(`/users/students/${id}`),
   updateStudent: (id, data) => api.put(`/users/students/${id}`, data),
   deleteStudent: (id) => {

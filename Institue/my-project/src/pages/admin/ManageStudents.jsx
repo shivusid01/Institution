@@ -78,22 +78,24 @@ const ManageStudents = () => {
         
         // Extract unique classes
         const classes = [...new Set(data.students.map(s => s.class).filter(Boolean))]
-        setAvailableClasses(classes.sort())
+        setAvailableClasses(prev => [...new Set([...prev, ...classes])].sort())
         
         // Calculate stats
         const activeCount = data.stats?.activeCount ?? data.students.filter(s => s.status === 'active').length
         const completedCount = data.stats?.completedCount ?? 0
         const inactiveCount = data.stats?.inactiveCount ?? (data.total - activeCount)
         const pendingFeesCount = data.students.filter(s => s.totalPaid === 0).length
+        const overallTotal = data.stats?.totalStudents || data.overallTotal || data.total || 0
         
-        setStats({
-          totalStudents: data.total || 0,
+        setStats(prevStats => ({
+          ...prevStats,
+          totalStudents: overallTotal,
           activeStudents: activeCount,
           completedStudents: completedCount,
           inactiveStudents: inactiveCount,
           totalRevenue: data.students.reduce((sum, s) => sum + (s.totalPaid || 0), 0),
           pendingFees: pendingFeesCount
-        })
+        }))
       }
     } catch (error) {
       console.error('Error fetching students:', error)
@@ -398,7 +400,7 @@ Institute Admin
   }
 
   const statusOptions = [
-    { value: 'all', label: 'All Students', count: totalStudents },
+    { value: 'all', label: 'All Students', count: stats.totalStudents },
     { value: 'active', label: 'Active', count: stats.activeStudents },
     { value: 'inactive', label: 'Inactive', count: stats.inactiveStudents },
     { value: 'completed', label: 'Completed', color: 'purple', count: stats.completedStudents }

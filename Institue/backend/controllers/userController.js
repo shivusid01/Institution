@@ -130,6 +130,9 @@ const getAllStudents = async (req, res) => {
   try {
     const { page = 1, limit = 10, status, class: studentClass, search } = req.query;
     
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.max(1, parseInt(limit, 10) || 10);
+
     // Build query
     let query = { role: 'student' };
     
@@ -153,11 +156,12 @@ const getAllStudents = async (req, res) => {
     const students = await User.find(query)
       .select('-password')
       .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
+      .limit(limitNum)
+      .skip((pageNum - 1) * limitNum)
       .lean();
     
     const total = await User.countDocuments(query);
+    const overallTotal = await User.countDocuments({ role: 'student' });
     
     // Get additional stats for each student
     const studentsWithStats = await Promise.all(
@@ -186,10 +190,12 @@ const getAllStudents = async (req, res) => {
       success: true,
       count: students.length,
       total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: parseInt(page),
+      overallTotal,
+      totalPages: Math.ceil(total / limitNum) || 1,
+      currentPage: pageNum,
       students: studentsWithStats,
       stats: {
+        totalStudents: overallTotal,
         activeCount,
         inactiveCount,
         completedCount
