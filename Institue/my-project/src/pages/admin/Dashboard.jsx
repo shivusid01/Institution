@@ -48,7 +48,7 @@ const AdminDashboard = () => {
   const fetchAllStudents = async () => {
     try {
       setLoading(true)
-      const response = await userAPI.getAllStudents()
+      const response = await userAPI.getAllStudents({ limit: 1000 })
       if (response.data.success) {
         setStudents(response.data.students || [])
       }
