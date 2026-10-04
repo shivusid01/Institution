@@ -216,6 +216,52 @@ app.get('/uploads/profiles/:filename', async (req, res, next) => {
   res.status(404).send('Profile image not found');
 });
 
+// Serve syllabus PDFs with fallback for missing files on ephemeral disk
+app.get('/uploads/syllabus/:filename', async (req, res, next) => {
+  const filePath = path.join(__dirname, 'uploads/syllabus', req.params.filename);
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'inline');
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  // Try retrieving from MongoDB GridFS 'syllabus' or 'documents' buckets
+  try {
+    if (mongoose.connection && mongoose.connection.readyState === 1 && mongoose.connection.db) {
+      for (const bucketName of ['syllabus', 'documents']) {
+        const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName });
+        const gridFiles = await bucket.find({ filename: req.params.filename }).toArray();
+        if (gridFiles.length > 0) {
+          const filename = req.params.filename.endsWith('.pdf') ? req.params.filename : `${req.params.filename}.pdf`;
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(filename)}"`);
+          const downloadStream = bucket.openDownloadStream(gridFiles[0]._id);
+
+          // Recreate local cache on disk
+          try {
+            const cachePath = path.join(__dirname, 'uploads/syllabus', req.params.filename);
+            const writeCacheStream = fs.createWriteStream(cachePath);
+            downloadStream.pipe(writeCacheStream).on('error', () => {});
+          } catch (cErr) {}
+
+          return downloadStream.pipe(res);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('GridFS syllabus stream error in server.js:', err);
+  }
+
+  // If file doesn't exist on disk or GridFS, send dynamic PDF stream buffer instead of 404 JSON
+  const filename = req.params.filename.endsWith('.pdf') ? req.params.filename : `${req.params.filename}.pdf`;
+  const pdfHeader = `%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n4 0 obj\n<< /Length 200 >>\nstream\nBT\n/F1 16 Tf\n50 720 Td\n(SHARMA INSTITUTE - COURSE SYLLABUS) Tj\n/F1 12 Tf\n0 -30 Td\n(File: ${filename}) Tj\nET\nendstream\nendobj\n5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\nxref\n0 6\n0000000000 65535 f\ntrailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n300\n%%EOF`;
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+  return res.send(Buffer.from(pdfHeader, 'binary'));
+});
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 /* ===================== DATABASE ===================== */

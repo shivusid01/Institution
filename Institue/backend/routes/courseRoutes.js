@@ -30,6 +30,35 @@ router.delete('/:id', authorize('admin'), deleteCourse);
 router.get('/stats/dashboard', authorize('admin'), getCourseStats);
 const multer = require('multer');
 const path = require('path');
+const mongoose = require('mongoose');
+const fs = require('fs');
+
+const uploadSyllabusToGridFS = (filePath, fileName) => {
+  return new Promise((resolve) => {
+    try {
+      if (!mongoose.connection || mongoose.connection.readyState !== 1 || !mongoose.connection.db) {
+        return resolve(null);
+      }
+      const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+        bucketName: 'syllabus'
+      });
+      const uploadStream = bucket.openUploadStream(fileName, {
+        contentType: 'application/pdf'
+      });
+      const readStream = fs.createReadStream(filePath);
+      readStream.pipe(uploadStream);
+
+      uploadStream.on('finish', () => resolve(uploadStream.id));
+      uploadStream.on('error', (err) => {
+        console.error('Syllabus GridFS Upload Error:', err);
+        resolve(null);
+      });
+    } catch (err) {
+      console.error('Syllabus GridFS Upload Exception:', err);
+      resolve(null);
+    }
+  });
+};
 
 // Multer configuration for syllabus PDF uploads
 const storage = multer.diskStorage({
@@ -59,7 +88,7 @@ const upload = multer({
 });
 
 // Admin syllabus upload route
-router.post('/upload-syllabus', protect, authorize('admin'), upload.single('syllabus'), (req, res) => {
+router.post('/upload-syllabus', protect, authorize('admin'), upload.single('syllabus'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -68,6 +97,11 @@ router.post('/upload-syllabus', protect, authorize('admin'), upload.single('syll
       });
     }
     
+    // Backup file to GridFS asynchronously
+    uploadSyllabusToGridFS(req.file.path, req.file.filename).catch(err => {
+      console.error('GridFS syllabus backup error:', err);
+    });
+
     res.status(200).json({
       success: true,
       message: 'Syllabus PDF uploaded successfully',
