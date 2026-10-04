@@ -155,9 +155,15 @@ const api = axios.create({
   },
 });
 
-// Attach token automatically
+// Attach token automatically & check session expiration before sending request
 api.interceptors.request.use(
   (config) => {
+    const lastActivity = localStorage.getItem('lastActivity');
+    if (lastActivity && Date.now() - parseInt(lastActivity, 10) > 30 * 60 * 1000) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('lastActivity');
+    }
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -165,6 +171,22 @@ api.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// Global response interceptor for 401 Unauthorized
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('lastActivity');
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
 );
 
 // ================= PAYMENT APIs =================

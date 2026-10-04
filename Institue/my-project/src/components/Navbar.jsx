@@ -44,18 +44,6 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isFreeMaterialHovered, setIsFreeMaterialHovered] = useState(false)
   const [isMobileFreeMaterialOpen, setIsMobileFreeMaterialOpen] = useState(false)
-
-  // Mandatory details modal state
-  const [showMandatoryModal, setShowMandatoryModal] = useState(false)
-  const [targetCategory, setTargetCategory] = useState('Study Material')
-  const [modalFormData, setModalFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    studentClass: ''
-  })
-  const [modalError, setModalError] = useState('')
-
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
     if (imagePath.startsWith('http') || imagePath.startsWith('data:')) return imagePath;
@@ -83,30 +71,15 @@ const Navbar = () => {
   ]
 
   const handleCategoryClick = (categoryName) => {
-    const existingDetails = localStorage.getItem('freeMaterialUserDetails')
     setIsFreeMaterialHovered(false)
     setIsMobileMenuOpen(false)
     setIsMobileFreeMaterialOpen(false)
 
-    if (isAuthenticated || existingDetails) {
+    if (isAuthenticated) {
       navigate(`/documents?category=${encodeURIComponent(categoryName)}`)
     } else {
-      setTargetCategory(categoryName)
-      setShowMandatoryModal(true)
+      navigate('/signup')
     }
-  }
-
-  const handleModalSubmit = (e) => {
-    e.preventDefault()
-    if (!modalFormData.name.trim() || !modalFormData.phone.trim() || !modalFormData.email.trim() || !modalFormData.studentClass) {
-      setModalError('Please fill in all required fields.')
-      return
-    }
-
-    localStorage.setItem('freeMaterialUserDetails', JSON.stringify(modalFormData))
-    setShowMandatoryModal(false)
-    setModalError('')
-    navigate(`/documents?category=${encodeURIComponent(targetCategory)}`)
   }
 
   // Navigation items

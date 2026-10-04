@@ -4,32 +4,91 @@ import { authAPI } from "../services/api";
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   /* ======================================================
-     RESTORE SESSION ON REFRESH
+     SESSION TIMEOUT HELPERS
+  ====================================================== */
+  const isSessionExpired = () => {
+    const lastActivity = localStorage.getItem("lastActivity");
+    if (!lastActivity) return true;
+    return Date.now() - parseInt(lastActivity, 10) > SESSION_TIMEOUT_MS;
+  };
+
+  const updateLastActivity = () => {
+    localStorage.setItem("lastActivity", Date.now().toString());
+  };
+
+  /* ======================================================
+     RESTORE SESSION ON REFRESH & CHECK EXPIRATION
   ====================================================== */
   useEffect(() => {
     const token = localStorage.getItem("token");
     const savedUser = localStorage.getItem("user");
 
     if (token && savedUser) {
-      try {
-        const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
-        console.log("✅ Session restored:", parsedUser.email);
-      } catch (err) {
-        console.error("❌ Error restoring session:", err);
+      if (isSessionExpired()) {
+        console.log("⏰ Session expired on startup");
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        localStorage.removeItem("lastActivity");
+        setUser(null);
+      } else {
+        try {
+          const parsedUser = JSON.parse(savedUser);
+          setUser(parsedUser);
+          updateLastActivity();
+          console.log("✅ Session restored:", parsedUser.email);
+        } catch (err) {
+          console.error("❌ Error restoring session:", err);
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          localStorage.removeItem("lastActivity");
+          setUser(null);
+        }
       }
     }
 
     setLoading(false);
   }, []);
+
+  /* ======================================================
+     ACTIVITY LISTENER & PERIODIC SESSION TIMEOUT CHECK
+  ====================================================== */
+  useEffect(() => {
+    if (!user) return;
+
+    // Check every 30 seconds if the session has expired
+    const interval = setInterval(() => {
+      if (isSessionExpired()) {
+        console.log("⏰ Session timed out due to inactivity. Logging out...");
+        logout();
+      }
+    }, 30000);
+
+    // Throttle updating lastActivity to at most once per 60 seconds
+    let lastUpdate = Date.now();
+    const handleUserActivity = () => {
+      const now = Date.now();
+      if (now - lastUpdate > 60000) {
+        lastUpdate = now;
+        updateLastActivity();
+      }
+    };
+
+    const events = ["mousedown", "keydown", "scroll", "touchstart"];
+    events.forEach((event) => window.addEventListener(event, handleUserActivity));
+
+    return () => {
+      clearInterval(interval);
+      events.forEach((event) => window.removeEventListener(event, handleUserActivity));
+    };
+  }, [user]);
 
   /* ======================================================
      UPDATE USER (NEW ✅)
@@ -80,6 +139,7 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(userWithRole));
+      updateLastActivity();
       setUser(userWithRole);
 
       console.log("✅ Login successful:", userWithRole.email);
@@ -127,6 +187,7 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(userWithRole));
+      updateLastActivity();
       setUser(userWithRole);
 
       console.log("✅ Signup successful:", userWithRole.email);
@@ -174,6 +235,7 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(userWithRole));
+      updateLastActivity();
       setUser(userWithRole);
 
       console.log("✅ Google login successful:", userWithRole.email);
@@ -203,6 +265,7 @@ export const AuthProvider = ({ children }) => {
     console.log("🚪 Logging out:", user?.email);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("lastActivity");
     setUser(null);
   };
 
