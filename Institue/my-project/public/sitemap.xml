@@ -2,37 +2,62 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://sharma-institute.vercel.app/</loc>
+    <lastmod>2026-10-06</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.00</priority>
-    <changefreq>daily</changefreq>
   </url>
   <url>
-    <loc>https://sharma-institute.vercel.app/about-us</loc>
-    <priority>0.80</priority>
+    <loc>https://sharma-institute.vercel.app/about</loc>
+    <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>https://sharma-institute.vercel.app/courses/school-coaching</loc>
-    <priority>0.90</priority>
-    <changefreq>weekly</changefreq>
-  </url>
-  <url>
-    <loc>https://sharma-institute.vercel.app/courses/data-analytics</loc>
-    <priority>0.90</priority>
-    <changefreq>weekly</changefreq>
-  </url>
-  <url>
-    <loc>https://sharma-institute.vercel.app/admissions</loc>
     <priority>0.80</priority>
-    <changefreq>weekly</changefreq>
   </url>
   <url>
-    <loc>https://sharma-institute.vercel.app/student-corner</loc>
-    <priority>0.85</priority>
-    <changefreq>daily</changefreq>
+    <loc>https://sharma-institute.vercel.app/courses</loc>
+    <lastmod>2026-10-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
   </url>
   <url>
     <loc>https://sharma-institute.vercel.app/contact</loc>
-    <priority>0.70</priority>
+    <lastmod>2026-10-06</lastmod>
     <changefreq>monthly</changefreq>
+    <priority>0.70</priority>
+  </url>
+  <url>
+    <loc>https://sharma-institute.vercel.app/free-material/study-material</loc>
+    <lastmod>2026-10-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sharma-institute.vercel.app/free-material/current-affairs</loc>
+    <lastmod>2026-10-06</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://sharma-institute.vercel.app/free-material/checked-copy</loc>
+    <lastmod>2026-10-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.70</priority>
+  </url>
+  <url>
+    <loc>https://sharma-institute.vercel.app/free-material/results</loc>
+    <lastmod>2026-10-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.70</priority>
+  </url>
+  <url>
+    <loc>https://sharma-institute.vercel.app/login</loc>
+    <lastmod>2026-10-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.30</priority>
+  </url>
+  <url>
+    <loc>https://sharma-institute.vercel.app/signup</loc>
+    <lastmod>2026-10-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.30</priority>
   </url>
 </urlset>
